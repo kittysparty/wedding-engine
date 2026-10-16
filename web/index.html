@@ -122,6 +122,14 @@ html,body{height:100%;margin:0;background:#F1EFE9}
 #ybd-app .landing h1{font-family:'Newsreader',serif;font-weight:300;font-style:italic;font-size:2.4rem;margin-bottom:.6rem}
 #ybd-app .landing p{color:#8B857A}
 #ybd-app .landing a{color:#5E7488}
+#ybd-app .phintro{color:#8B857A;margin:.4rem 0 1.2rem}
+#ybd-app .phgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:1.5rem}
+#ybd-app .phgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.2rem;cursor:pointer;background:#e7e3da;display:block}
+#ybd-app .phempty{text-align:center;color:#8B857A;padding:2.5rem 0;font-family:'Newsreader',serif;font-style:italic;font-size:1.2rem}
+#ybd-app .phlight{position:fixed;inset:0;background:rgba(27,26,22,.93);display:none;align-items:center;justify-content:center;z-index:2147483600;padding:1.2rem}
+#ybd-app .phlight.on{display:flex}
+#ybd-app .phlight img{max-width:100%;max-height:100%;border-radius:.3rem}
+#ybd-app .phlight .x{position:absolute;top:1rem;right:1.1rem;color:#fff;background:none;border:none;font-size:1.8rem;cursor:pointer;line-height:1}
 `;
 var st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
 
@@ -227,7 +235,14 @@ function render(CFG){
 
   var rsvp=has.rsvp?'<div class="view" data-id="rsvp"><div class="col pad finder rsvp"><div class="kicker">RSVP</div><div class="lab">Will you join us?</div><div id="ybd-rsvp-body"></div><div class="seatstatus" id="ybd-rsvp-status"></div></div></div>':'';
 
-  var photos=(has.photos&&CFG.wedibox)?('<div class="view frame" data-id="photos"><iframe data-src="'+CFG.wedibox+'" allow="camera;microphone;clipboard-write;encrypted-media"></iframe></div>'):'';
+  var photos=has.photos?('<div class="view" data-id="photos"><div class="col pad">'
+  +'<div class="kicker">Shared album</div><h2>Photos</h2>'
+  +'<p class="phintro">Add your snaps from the day — everyone’s photos, all in one place.</p>'
+  +'<input type="file" id="ybd-ph-input" accept="image/*" multiple style="display:none">'
+  +'<button type="button" class="rsvpbtn" id="ybd-ph-add" style="max-width:18rem;margin:0 auto">Add photos</button>'
+  +'<div class="seatstatus" id="ybd-ph-status" style="text-align:center"></div>'
+  +'<div class="phgrid" id="ybd-ph-grid"></div>'
+  +'</div></div>'):'';
 
   shell.innerHTML='<div class="bar">'
   +'<button type="button" class="back" id="ybd-back">← Back</button>'
@@ -243,6 +258,7 @@ function render(CFG){
     if(fr&&!fr.getAttribute("src"))fr.setAttribute("src",fr.getAttribute("data-src"));
     if(id==="seat")seatInit();
     if(id==="rsvp")rsvpInit();
+    if(id==="photos")photosInit();
   }
   [].forEach.call(app.querySelectorAll("[data-go]"),function(el){el.addEventListener("click",function(){go(el.getAttribute("data-go"));});});
   back.addEventListener("click",function(){go("home");});
@@ -325,6 +341,43 @@ function render(CFG){
       return;
     }
     rsvpSearchStep();
+  }
+
+  /* ===== photos (native Supabase album) ===== */
+  var photosStarted=false,PHLIGHT=null;
+  function openLight(url){if(!PHLIGHT){PHLIGHT=document.createElement("div");PHLIGHT.className="phlight";PHLIGHT.innerHTML='<button type="button" class="x" aria-label="Close">×</button><img alt="">';app.appendChild(PHLIGHT);PHLIGHT.addEventListener("click",function(){PHLIGHT.classList.remove("on");});}PHLIGHT.querySelector("img").src=url;PHLIGHT.classList.add("on");}
+  function photosInit(){
+    if(photosStarted)return;photosStarted=true;
+    var add=app.querySelector("#ybd-ph-add"),input=app.querySelector("#ybd-ph-input"),grid=app.querySelector("#ybd-ph-grid"),status=app.querySelector("#ybd-ph-status");
+    add.addEventListener("click",function(){input.click();});
+    input.addEventListener("change",function(){var files=[].slice.call(input.files||[]);input.value="";if(files.length)uploadFiles(files);});
+    grid.addEventListener("click",function(e){var img=e.target.closest?e.target.closest("img"):null;if(img)openLight(img.getAttribute("data-full"));});
+    loadPhotos();
+    function loadPhotos(){
+      grid.innerHTML='<div class="phempty">Loading photos…</div>';
+      apiGet("action=photo_list&e="+encodeURIComponent(EVENTCODE)).then(function(r){
+        if(!r||!r.ok){grid.innerHTML='<div class="phempty">Couldn’t load the album — please refresh.</div>';return;}
+        var photos=r.photos||[];
+        if(!photos.length){grid.innerHTML='<div class="phempty">No photos yet — be the first to add one.</div>';return;}
+        grid.innerHTML=photos.map(function(p){return '<img loading="lazy" src="'+esc(p.url)+'" data-full="'+esc(p.url)+'" alt="">';}).join("");
+      }).catch(function(){grid.innerHTML='<div class="phempty">Couldn’t load the album — please refresh.</div>';});
+    }
+    function uploadOne(file){
+      return apiPost({action:"photo_sign",e:EVENTCODE,filename:file.name,contentType:file.type||"application/octet-stream"}).then(function(r){
+        if(!r||!r.ok||!r.signedUrl)throw new Error("sign");
+        return fetch(r.signedUrl,{method:"PUT",headers:{"content-type":file.type||"application/octet-stream","x-upsert":"true"},body:file}).then(function(resp){if(!resp.ok)throw new Error("put "+resp.status);});
+      });
+    }
+    function uploadFiles(files){
+      var total=files.length,done=0,fail=0;
+      add.disabled=true;
+      status.innerHTML="<div>Uploading 0 / "+total+"…</div>";
+      var seq=Promise.resolve();
+      files.forEach(function(file){
+        seq=seq.then(function(){return uploadOne(file).then(function(){done++;},function(){fail++;}).then(function(){status.innerHTML="<div>Uploading "+(done+fail)+" / "+total+"…</div>";});});
+      });
+      seq.then(function(){add.disabled=false;status.innerHTML="<div>"+(fail?(done+" added, "+fail+" couldn’t upload."):(done+" photo"+(done===1?"":"s")+" added — thank you!"))+"</div>";loadPhotos();setTimeout(function(){status.innerHTML="";},4500);});
+    }
   }
 }
 })();
