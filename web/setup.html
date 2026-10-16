@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New wedding — Your Big Day</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="https://i0.wp.com/yourbigday.events/wp-content/uploads/2024/01/image_123650291.jpg">
+</head>
+<body>
+<div id="ybd-setup"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+"use strict";
+var API="https://eihdtxpcnnqumrjnnvja.supabase.co/functions/v1/api";
+var app=document.getElementById("ybd-setup");
+if(!app)return;
+var LOGO="https://i0.wp.com/yourbigday.events/wp-content/uploads/2024/01/image_123650291.jpg";
+var ORIGIN=location.origin;
+
+var CSS=`
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,300;1,6..72,400&family=Inter:wght@400;500;600&display=swap');
+html,body{background:#F1EFE9;margin:0}
+#ybd-setup{max-width:760px;margin:0 auto;padding:2rem 1.25rem 5rem;font-family:'Inter',system-ui,sans-serif;color:#1B1A16;line-height:1.5}
+#ybd-setup *{box-sizing:border-box}
+#ybd-setup .wm{font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:#8B857A;font-weight:500}
+#ybd-setup h1{font-family:'Newsreader',serif;font-weight:300;font-style:italic;font-size:2.2rem;margin:.3rem 0 1.2rem}
+#ybd-setup h2{font-family:'Newsreader',serif;font-weight:300;font-style:italic;font-size:1.35rem;margin:1.8rem 0 .6rem;border-top:1px solid #DBD6CB;padding-top:1.3rem}
+#ybd-setup label{display:block;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#8B857A;margin:.9rem 0 .3rem}
+#ybd-setup input,#ybd-setup select,#ybd-setup textarea{width:100%;font-family:'Inter';font-size:1rem;color:#1B1A16;background:#fff;border:1px solid #DBD6CB;border-radius:.25rem;padding:.6rem .7rem;outline:none}
+#ybd-setup textarea{min-height:4.5rem;resize:vertical}
+#ybd-setup .row{display:flex;gap:.8rem;flex-wrap:wrap}
+#ybd-setup .row>div{flex:1 1 12rem}
+#ybd-setup .hint{font-size:.82rem;color:#8B857A;margin-top:.3rem}
+#ybd-setup .feats{display:flex;flex-wrap:wrap;gap:1rem;margin-top:.4rem}
+#ybd-setup .feats label{display:inline-flex;align-items:center;gap:.4rem;margin:0;text-transform:none;letter-spacing:0;font-size:.95rem;color:#1B1A16}
+#ybd-setup .feats input{width:auto}
+#ybd-setup .card{background:#fff;border:1px solid #DBD6CB;border-radius:.3rem;padding:.9rem 1rem;margin-bottom:.7rem}
+#ybd-setup .mini{background:none;border:none;color:#5E7488;font-size:.85rem;cursor:pointer;text-decoration:underline;padding:.3rem 0}
+#ybd-setup .mini.rm{color:#9a6a5a;float:right;text-decoration:none}
+#ybd-setup .set{background:#efece4;border:1px solid #DBD6CB;border-radius:.3rem;padding:.9rem 1rem;margin-bottom:1.3rem}
+#ybd-setup .btn{background:#1B1A16;color:#F1EFE9;border:none;border-radius:999px;padding:.85rem 1.8rem;font-family:'Inter';font-size:1rem;font-weight:500;cursor:pointer;margin-top:1.5rem}
+#ybd-setup .btn:disabled{opacity:.5}
+#ybd-setup .msg{margin-top:1rem;font-size:.95rem;color:#5c564d}
+#ybd-setup .msg.err{color:#9a6a5a}
+#ybd-setup .res{background:#fff;border:1px solid #1B1A16;border-radius:.3rem;padding:1.3rem;margin-top:1.5rem}
+#ybd-setup .res h2{border:none;margin:1.1rem 0 .3rem;padding:0}
+#ybd-setup .res h2:first-child{margin-top:0}
+#ybd-setup .res .lk{display:block;word-break:break-all;color:#5E7488;margin:.15rem 0 .2rem}
+#ybd-setup .res code{display:block;white-space:pre-wrap;word-break:break-all;background:#f3f1ea;border:1px solid #DBD6CB;border-radius:.25rem;padding:.7rem;font-size:.82rem;margin:.3rem 0}
+#ybd-setup #ybd-qr{margin:.6rem 0}
+#ybd-setup #ybd-qr img,#ybd-setup #ybd-qr canvas{border:1px solid #DBD6CB;border-radius:.25rem}
+`;
+var st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
+
+function esc(s){return(""+(s==null?"":s)).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function slugify(s){return(""+s).toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);}
+function rnd(n){var a="abcdefghijklmnopqrstuvwxyz0123456789",o="";for(var i=0;i<n;i++)o+=a[Math.floor(Math.random()*a.length)];return o;}
+function token(){var a="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789",o="";for(var i=0;i<11;i++)o+=a[Math.floor(Math.random()*a.length)];return o;}
+function fmtMeta(d){if(!d)return "";try{return new Date(d+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});}catch(e){return "";}}
+function $(id){return app.querySelector(id);}
+function val(id){var e=$(id);return e?e.value.trim():"";}
+function apiPost(payload){return fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).then(function(r){return r.json();});}
+
+var LS="ybd_setup_settings_v2";
+function getSettings(){try{return JSON.parse(localStorage.getItem(LS)||"{}");}catch(e){return {};}}
+function setSettings(o){try{localStorage.setItem(LS,JSON.stringify(o));}catch(e){}}
+
+function makeRepeater(mountSel,addLabel,tpl,onAdd){
+  var mount=$(mountSel);var list=document.createElement("div");var add=document.createElement("button");
+  add.type="button";add.className="mini";add.textContent="+ "+addLabel;
+  function addRow(){var c=document.createElement("div");c.className="card";c.innerHTML='<button type="button" class="mini rm">remove</button>'+tpl;list.appendChild(c);c.querySelector(".rm").addEventListener("click",function(){c.remove();});if(onAdd)onAdd(c);return c;}
+  add.addEventListener("click",addRow);mount.appendChild(list);mount.appendChild(add);
+  return {list:list,addRow:addRow};
+}
+
+var S=getSettings();
+
+app.innerHTML=''
++'<div class="wm">Your Big Day</div><h1>New wedding</h1>'
++'<div class="set"><label>Operator password</label><input id="s-secret" type="password" value="'+esc(S.secret||"")+'"><div class="hint">Saved on this device only.</div></div>'
++'<h2>The couple</h2>'
++'<label>Couple names (as shown on the page)</label><input id="f-couple" placeholder="Sarah & Tom">'
++'<div class="row"><div><label>Wedding date</label><input id="f-date" type="date"></div><div><label>Ceremony time</label><input id="f-time" type="time" value="15:00"></div></div>'
++'<div class="row"><div><label>Page link (slug)</label><input id="f-slug" placeholder="sarah-and-tom"></div><div><label>Event code</label><input id="f-code" placeholder="auto"></div></div>'
++'<div class="hint">Page will live at '+esc(ORIGIN)+'/<b id="slugprev">your-slug</b></div>'
++'<h2>Look & features</h2>'
++'<label>Hero photo URL (the couple’s photo)</label><input id="f-hero" placeholder="https://...">'
++'<label>Features shown to guests</label><div class="feats">'
++'<label><input type="checkbox" class="feat" value="rsvp" checked> RSVP</label>'
++'<label><input type="checkbox" class="feat" value="seat" checked> Find your seat</label>'
++'<label><input type="checkbox" class="feat" value="menu" checked> Menu</label>'
++'<label><input type="checkbox" class="feat" value="photos"> Photo wall</label></div>'
++'<label>Wedibox photo URL (if Photo wall is on)</label><input id="f-wedibox" placeholder="https://embed.wedibox.com/e/...">'
++'<label>RSVP deadline (optional)</label><input id="f-deadline" type="date">'
++'<label>Venue &amp; travel</label><textarea id="f-venue" placeholder="Venue name, address, parking and transport..."></textarea>'
++'<h2>Our love story</h2><div class="hint">One paragraph per block.</div><div id="m-story"></div>'
++'<h2>Order of the day</h2><div id="m-order"></div>'
++'<h2>Menu</h2><div class="hint">Add each course. Tick “alternating” when guests choose between two dishes.</div><div id="m-menu"></div>'
++'<h2>Reception running order</h2><div id="m-run"></div>'
++'<h2>Guest list</h2><div class="hint">One household per line: <b>Household: Name One, Name Two</b>. A line with just a name is a one-person household.</div>'
++'<textarea id="f-guests" style="min-height:9rem" placeholder="Patel family: Priya Patel, Arjun Patel&#10;Chen family: Mia Chen, David Chen&#10;Jane Doe"></textarea>'
++'<button type="button" class="btn" id="f-create">Create wedding</button>'
++'<div class="msg" id="f-msg"></div>'
++'<div id="f-res"></div>';
+
+var repStory=makeRepeater("#m-story","Add paragraph",'<textarea class="f-story" placeholder="Their story..."></textarea>');
+var repOrder=makeRepeater("#m-order","Add item",'<div class="row"><div style="flex:0 0 8rem"><input class="f-ot" placeholder="3:00 PM"></div><div><input class="f-ol" placeholder="Ceremony"></div></div>');
+var repRun=makeRepeater("#m-run","Add item",'<div class="row"><div style="flex:0 0 8rem"><input class="f-rt" placeholder="6:00 PM"></div><div><input class="f-rl" placeholder="Guests seated"></div></div>');
+var repMenu=makeRepeater("#m-menu","Add course",'<label>Course name</label><input class="f-mc" placeholder="Entrée"><label style="display:inline-flex;align-items:center;gap:.4rem;text-transform:none;letter-spacing:0;color:#1B1A16"><input type="checkbox" class="f-malt" style="width:auto"> Alternating (guests choose)</label><div class="m-items" style="margin-top:.5rem"></div>',function(card){
+  var items=card.querySelector(".m-items");var addItem=document.createElement("button");addItem.type="button";addItem.className="mini";addItem.textContent="+ Add dish";
+  function addDish(){var d=document.createElement("div");d.style.cssText="border-top:1px solid #EFECE4;padding-top:.5rem;margin-top:.5rem";d.innerHTML='<button type="button" class="mini rm">remove dish</button><input class="f-md" placeholder="Dish name"><input class="f-mn" placeholder="Short description (optional)" style="margin-top:.4rem"><input class="f-mtag" placeholder="Tag e.g. GF / V / DF (optional)" style="margin-top:.4rem">';items.appendChild(d);d.querySelector(".rm").addEventListener("click",function(){d.remove();});}
+  addItem.addEventListener("click",addDish);card.appendChild(addItem);addDish();
+});
+repStory.addRow();repOrder.addRow();repMenu.addRow();
+
+function syncSlug(){var sp=$("#slugprev");var slug=val("#f-slug")||slugify(val("#f-couple"));sp.textContent=slug||"your-slug";}
+$("#f-couple").addEventListener("input",function(){if(!$("#f-slug").value)syncSlug();});
+$("#f-slug").addEventListener("input",syncSlug);
+
+function parseGuests(text){var out=[];(""+text).split(/\r?\n/).forEach(function(line){line=line.trim();if(!line)return;var i=line.indexOf(":");if(i>-1){var hh=line.slice(0,i).trim();line.slice(i+1).split(",").forEach(function(nm){nm=nm.trim();if(nm)out.push({household:hh||nm,name:nm});});}else{out.push({household:line,name:line});}});return out;}
+
+function collect(){
+  var couple=val("#f-couple");var date=val("#f-date");var time=val("#f-time")||"15:00";
+  var slug=val("#f-slug")||slugify(couple);
+  var code=val("#f-code")||(slug.slice(0,24)+"-"+rnd(4));
+  var feats=[];[].forEach.call(app.querySelectorAll(".feat"),function(c){if(c.checked)feats.push(c.value);});
+  var story=[];[].forEach.call(app.querySelectorAll(".f-story"),function(t){if(t.value.trim())story.push(t.value.trim());});
+  var order=[];[].forEach.call($("#m-order").querySelectorAll(".card"),function(c){var t=c.querySelector(".f-ot").value.trim(),l=c.querySelector(".f-ol").value.trim();if(t||l)order.push([t,l]);});
+  var run=[];[].forEach.call($("#m-run").querySelectorAll(".card"),function(c){var t=c.querySelector(".f-rt").value.trim(),l=c.querySelector(".f-rl").value.trim();if(t||l)run.push([t,l]);});
+  var menu=[];[].forEach.call($("#m-menu").querySelectorAll(".card"),function(c){var name=c.querySelector(".f-mc").value.trim();if(!name)return;var alt=c.querySelector(".f-malt").checked;var items=[];[].forEach.call(c.querySelectorAll(".m-items > div"),function(d){var dd=d.querySelector(".f-md").value.trim();if(!dd)return;var it={d:dd};var n=d.querySelector(".f-mn").value.trim();if(n)it.n=n;var tg=d.querySelector(".f-mtag").value.trim();if(tg)it.tag=tg;items.push(it);});if(items.length){var co={c:name,items:items};if(alt)co.alt=true;menu.push(co);}});
+  var cfg={
+    event_code:code,slug:slug,couple_names:couple,
+    date_meta:fmtMeta(date),wedding_iso:date?(date+"T"+time+":00"):"",
+    theme:"editorial",logo:LOGO,hero_photo:val("#f-hero"),
+    features:feats,wedibox_url:val("#f-wedibox"),
+    venue_text:val("#f-venue"),
+    story:story,order_of_day:order,menu:menu,menu_order:run,
+    client_token:token(),admin_token:token(),rsvp_deadline:val("#f-deadline")
+  };
+  return {config:cfg,guests:parseGuests(val("#f-guests"))};
+}
+
+function msg(t,err){var m=$("#f-msg");m.textContent=t||"";m.className="msg"+(err?" err":"");}
+
+$("#f-create").addEventListener("click",function(){
+  var secret=val("#s-secret");
+  setSettings({secret:secret});
+  if(!secret){msg("Enter the operator password at the top.",true);return;}
+  if(!val("#f-couple")){msg("Please enter the couple’s names.",true);return;}
+  if(!val("#f-date")){msg("Please choose the wedding date.",true);return;}
+  var data=collect();
+  if(!data.guests.length){msg("Please add the guest list.",true);return;}
+  var btn=$("#f-create");btn.disabled=true;
+  msg("Creating the wedding…");
+  apiPost({action:"provision",secret:secret,config:data.config,guests:data.guests}).then(function(r){
+    btn.disabled=false;
+    if(!r||!r.ok){msg(r&&r.error?("Couldn’t create: "+r.error):"Couldn’t create the wedding.",true);return;}
+    msg("");showResult(data.config,(r.guests!=null?r.guests:data.guests.length));
+  }).catch(function(){btn.disabled=false;msg("Couldn’t reach the server. Please try again.",true);});
+});
+
+function showResult(cfg,nGuests){
+  var weddingUrl=ORIGIN+"/"+cfg.slug;
+  var adminUrl=ORIGIN+"/manage#e="+encodeURIComponent(cfg.event_code)+"&t="+encodeURIComponent(cfg.admin_token);
+  var clientUrl=ORIGIN+"/manage#e="+encodeURIComponent(cfg.event_code)+"&t="+encodeURIComponent(cfg.client_token);
+  var res=$("#f-res");
+  res.innerHTML='<div class="res"><h2>'+esc(cfg.couple_names)+' is set up</h2>'
+   +'<div class="hint">'+nGuests+' guests added. Event code <b>'+esc(cfg.event_code)+'</b>. The page is live now — no further setup needed.</div>'
+   +'<h2>Wedding link (for guests)</h2><a class="lk" href="'+esc(weddingUrl)+'" target="_blank">'+esc(weddingUrl)+'</a><div id="ybd-qr"></div><button type="button" class="mini" id="r-qr">Download QR</button>'
+   +'<h2>Dashboards</h2><div class="hint">Yours (edit + export):</div><a class="lk" href="'+esc(adminUrl)+'" target="_blank">'+esc(adminUrl)+'</a><div class="hint">Couple’s (read-only):</div><a class="lk" href="'+esc(clientUrl)+'" target="_blank">'+esc(clientUrl)+'</a><button type="button" class="mini" id="r-copyc">Copy couple’s link</button>'
+   +'<h2>Later</h2><div class="hint">Once RSVPs are in, add table numbers to each guest and Find-your-seat switches on.</div>'
+   +'</div>';
+  var cc=$("#r-copyc");if(cc)cc.addEventListener("click",function(){try{navigator.clipboard.writeText(clientUrl);this.textContent="Copied";}catch(e){}});
+  res.scrollIntoView({behavior:"smooth"});
+  renderQR(weddingUrl);
+}
+
+function renderQR(url){
+  function go(){try{var box=$("#ybd-qr");box.innerHTML="";new window.QRCode(box,{text:url,width:180,height:180,correctLevel:window.QRCode.CorrectLevel.M});var dl=$("#r-qr");if(dl)dl.addEventListener("click",function(){var cv=box.querySelector("canvas");var img=box.querySelector("img");var href=cv?cv.toDataURL("image/png"):(img?img.src:"");if(!href)return;var a=document.createElement("a");a.href=href;a.download="qr-"+(url.replace(/[^a-z0-9]+/gi,"-"))+".png";document.body.appendChild(a);a.click();a.remove();});}catch(e){}}
+  if(window.QRCode){go();return;}
+  var b=$("#ybd-qr");if(b)b.innerHTML='<div class="hint">QR couldn’t load — the wedding link above still works.</div>';
+}
+})();
+</script>
+</body>
+</html>
