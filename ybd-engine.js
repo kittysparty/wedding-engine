@@ -102,6 +102,23 @@ body.admin-bar #ybd-app{top:32px}
 #ybd-app .soon .big{font-family:'Newsreader',serif;font-style:italic;font-size:1.6rem;margin-bottom:.5rem}
 #ybd-app .soon p{color:#8B857A}
 #ybd-app .boot{display:flex;align-items:center;justify-content:center;height:100%;font-family:'Newsreader',serif;font-style:italic;font-size:1.3rem;color:#8B857A}
+#ybd-app .rr{padding:1.1rem 0;border-bottom:1px solid #DBD6CB}
+#ybd-app .rr:last-child{border-bottom:none}
+#ybd-app .rr .nm{font-family:'Newsreader',serif;font-style:italic;font-size:1.3rem;margin-bottom:.6rem}
+#ybd-app .seg{display:inline-flex;border:1px solid #1B1A16;border-radius:999px;overflow:hidden}
+#ybd-app .seg button{background:none;border:none;padding:.45rem 1.1rem;font-family:'Inter';font-size:.9rem;color:#1B1A16;cursor:pointer}
+#ybd-app .seg button.on{background:#1B1A16;color:#F1EFE9}
+#ybd-app .rf label{display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#8B857A;margin:.8rem 0 .3rem}
+#ybd-app .rf select,#ybd-app .rf input{width:100%;font-family:'Inter';font-size:1rem;color:#1B1A16;background:#fff;border:1px solid #DBD6CB;border-radius:.2rem;padding:.6rem .7rem;outline:none}
+#ybd-app .rsvpbtn{display:block;margin-top:1.6rem;width:100%;background:#1B1A16;color:#F1EFE9;border:none;border-radius:999px;padding:.95rem;font-family:'Inter';font-size:1rem;font-weight:500;cursor:pointer}
+#ybd-app .rsvpbtn:disabled{opacity:.5;cursor:default}
+#ybd-app .rlink{background:none;border:none;color:#5E7488;font-family:'Inter';font-size:.9rem;cursor:pointer;padding:.7rem 0;text-decoration:underline}
+#ybd-app .rhh{font-family:'Newsreader',serif;font-style:italic;font-size:1.5rem;margin:.2rem 0 .4rem}
+#ybd-app .rmembers{list-style:none;margin:.6rem 0 1.2rem}
+#ybd-app .rmembers li{padding:.3rem 0;color:#4b463f;font-size:1.05rem}
+#ybd-app .rdone{text-align:center;padding:1.5rem 0}
+#ybd-app .rdone .big{font-family:'Newsreader',serif;font-style:italic;font-size:1.7rem;margin-bottom:.5rem}
+#ybd-app .rnote{font-size:.9rem;color:#8B857A;margin-top:.5rem}
 `;
 var st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
 
@@ -228,7 +245,7 @@ function render(CFG){
   var rsvp="";
   if(has.rsvp){
     rsvp=CFG.rsvpUrl
-      ?'<div class="view frame" data-id="rsvp"><iframe data-src="'+CFG.rsvpUrl+'" allow="clipboard-write"></iframe></div>'
+      ?'<div class="view" data-id="rsvp"><div class="col pad finder rsvp"><div class="kicker">RSVP</div><div class="lab">Will you join us?</div><div id="ybd-rsvp-body"></div><div class="seatstatus" id="ybd-rsvp-status"></div></div></div>'
       :'<div class="view" data-id="rsvp"><div class="col"><div class="soon"><div class="big">RSVP opening soon</div><p>The RSVP form is being connected \u2014 please check back shortly.</p></div></div></div>';
   }
 
@@ -248,6 +265,7 @@ function render(CFG){
     var fr=v?v.querySelector("iframe[data-src]"):null;
     if(fr&&!fr.getAttribute("src"))fr.setAttribute("src",fr.getAttribute("data-src"));
     if(id==="seat")seatInit();
+    if(id==="rsvp")rsvpInit();
   }
   [].forEach.call(app.querySelectorAll("[data-go]"),function(el){el.addEventListener("click",function(){go(el.getAttribute("data-go"));});});
   back.addEventListener("click",function(){go("home");});
@@ -255,46 +273,73 @@ function render(CFG){
   /* countdown */
   (function(){var el=app.querySelector("#ybd-cd");if(!el||!wd)return;var days=Math.max(0,Math.ceil((wd-new Date())/86400000));el.textContent=days===0?"Today is the day":(days+(days===1?" day to go":" days to go"));})();
 
-  /* ===== live seat search (reads the guests tab) ===== */
-  var GUESTS=[],BYNO={},CHOICES=[],seatDone=false,seatStarted=false;
-  var sq,outEl,statusEl;
+  /* ===== shared invite list (guests tab), used by seat + rsvp ===== */
+  var INVITE=[],inviteDone=false,inviteStarted=false,inviteCbs=[];
   function lev(a,b){var m=a.length,n=b.length;if(!m)return n;if(!n)return m;var p=[],c=[],i,j;for(j=0;j<=n;j++)p[j]=j;for(i=1;i<=m;i++){c[0]=i;for(j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));var t=p;p=c;c=t;}return p[n];}
   function mtch(name,q){var n=norm(name),query=norm(q);if(!query)return 0;if(n===query)return 100;if(n.indexOf(query)===0)return 90;var t=n.split(" ");for(var i=0;i<t.length;i++)if(t[i].indexOf(query)===0)return 80;if(n.indexOf(query)>-1)return 65;for(var k=0;k<t.length;k++){var d=lev(t[k],query);if(query.length>=4&&d<=1)return 55;if(query.length>=6&&d<=2)return 45;}return 0;}
+  function flushInvite(){var cbs=inviteCbs.slice();inviteCbs=[];cbs.forEach(function(f){try{f();}catch(e){}});}
+  window.__ybdInvCb=function(resp){try{var rows=gvizRows(resp);INVITE=[];rows.forEach(function(o){var code=(""+(o.event_code||"")).trim();if(norm(code)!==norm(EVENTCODE))return;var name=(""+(o.guest_name||"")).trim();if(!name)return;INVITE.push({name:name,household:(""+(o.household||"")).trim()||name,tno:Number(o.table_number)||0,tname:(""+(o.table_name||"")).trim()});});}catch(e){}inviteDone=true;flushInvite();};
+  function loadInvite(cb){if(cb)inviteCbs.push(cb);if(inviteDone){flushInvite();return;}if(inviteStarted)return;inviteStarted=true;loadGviz(GUESTS_GID,"__ybdInvCb");setTimeout(function(){if(!inviteDone){inviteDone=true;flushInvite();}},9000);}
+  function partyFor(household){return INVITE.filter(function(g){return norm(g.household)===norm(household);});}
+
+  /* ===== seat search ===== */
+  var GUESTS=[],BYNO={},CHOICES=[],seatStarted=false,sq,outEl,statusEl;
   function seatStatus(big,small){if(!statusEl)return;statusEl.innerHTML=big?('<div class="big">'+big+'</div>'+(small?'<div>'+small+'</div>':'')):"";}
   function clearOut(){outEl.className="result";outEl.innerHTML="";}
-  function showGuest(g){
-    var t=BYNO[g.tno]||{no:g.tno,name:g.tname,guests:[g.name]};
-    var mates=t.guests.map(function(n){var self=norm(n)===norm(g.name);return '<li class="'+(self?"self":"")+'">'+esc(n)+(self?" (you)":"")+'</li>';}).join("");
-    outEl.innerHTML='<div class="you">'+esc(g.name)+'</div><div class="seat"><span class="tno">Table '+g.tno+'</span> \u2014 '+esc(t.name)+'</div><div class="mates"><div class="ml">Seated with</div><ul>'+mates+'</ul></div>';
-    outEl.className="result on";
-  }
+  function showGuest(g){var t=BYNO[g.tno]||{no:g.tno,name:g.tname,guests:[g.name]};var mates=t.guests.map(function(n){var self=norm(n)===norm(g.name);return '<li class="'+(self?"self":"")+'">'+esc(n)+(self?" (you)":"")+'</li>';}).join("");outEl.innerHTML='<div class="you">'+esc(g.name)+'</div><div class="seat"><span class="tno">Table '+g.tno+'</span> \u2014 '+esc(t.name)+'</div><div class="mates"><div class="ml">Seated with</div><ul>'+mates+'</ul></div>';outEl.className="result on";}
   function showChoices(list){CHOICES=list;var b=list.map(function(g,i){return '<button type="button" class="choice" data-i="'+i+'">'+esc(g.name)+'</button>';}).join("");outEl.innerHTML='<div class="nomatch" style="font-size:1.2rem;margin-bottom:.6rem">A few names match \u2014 which one are you?</div>'+b;outEl.className="result on";}
-  function search(q){clearOut();if(!q.trim())return;var hits=[];GUESTS.forEach(function(g){var s=mtch(g.name,q);if(s>0)hits.push({g:g,s:s});});if(!hits.length){outEl.innerHTML='<div class="nomatch">We couldn\u2019t find that name.<small>Try your first or last name, or check with the couple.</small></div>';outEl.className="result on";return;}hits.sort(function(a,b){return b.s-a.s;});var best=hits[0].s;var top=hits.filter(function(h){return h.s===best;});if(top.length===1)showGuest(top[0].g);else showChoices(top.map(function(h){return h.g;}));}
-  function buildSeats(rows){
-    seatDone=true;
-    var mine=rows.filter(function(r){return norm(r.code)===norm(EVENTCODE);});
-    var withTables=mine.filter(function(r){return r.tno;});
-    if(!mine.length){seatStatus("Seating chart not found","Please check your link, or ask the couple.");return;}
-    if(!withTables.length){seatStatus("Seating opens closer to the day","Tables are assigned once RSVPs are in \u2014 please check back.");return;}
-    GUESTS=[];BYNO={};
-    withTables.forEach(function(r){if(!r.name)return;GUESTS.push({name:r.name,tno:r.tno,tname:r.tname});if(!BYNO[r.tno])BYNO[r.tno]={no:r.tno,name:r.tname,guests:[]};BYNO[r.tno].guests.push(r.name);});
-    seatStatus("","");
-  }
-  window.__ybdSeatCb=function(resp){
-    try{
-      var rows=gvizRows(resp),out=[];
-      rows.forEach(function(o){var code=(""+(o.event_code||"")).trim();if(!code)return;var name=(""+(o.guest_name||"")).trim();if(!name)return;out.push({code:code,name:name,tno:Number(o.table_number)||0,tname:(""+(o.table_name||"")).trim()});});
-      buildSeats(out);
-    }catch(e){seatDone=true;seatStatus("Something went wrong","Please refresh the page to try again.");}
-  };
+  function searchSeat(q){clearOut();if(!q.trim())return;var hits=[];GUESTS.forEach(function(g){var s=mtch(g.name,q);if(s>0)hits.push({g:g,s:s});});if(!hits.length){outEl.innerHTML='<div class="nomatch">We couldn\u2019t find that name.<small>Try your first or last name, or check with the couple.</small></div>';outEl.className="result on";return;}hits.sort(function(a,b){return b.s-a.s;});var best=hits[0].s;var top=hits.filter(function(h){return h.s===best;});if(top.length===1)showGuest(top[0].g);else showChoices(top.map(function(h){return h.g;}));}
   function seatInit(){
     if(seatStarted)return;seatStarted=true;
     sq=app.querySelector("#ybd-sq");outEl=app.querySelector("#ybd-seat-out");statusEl=app.querySelector("#ybd-seat-status");
-    var tmr;sq.addEventListener("input",function(e){clearTimeout(tmr);tmr=setTimeout(function(){if(seatDone)search(e.target.value);},110);});
+    var tmr;sq.addEventListener("input",function(e){clearTimeout(tmr);tmr=setTimeout(function(){if(GUESTS.length)searchSeat(e.target.value);},110);});
     outEl.addEventListener("click",function(e){var b=e.target.closest?e.target.closest(".choice"):null;if(!b)return;var g=CHOICES[Number(b.getAttribute("data-i"))];if(g)showGuest(g);});
     seatStatus("Loading the seating chart","One moment.");
-    loadGviz(GUESTS_GID,"__ybdSeatCb");
-    setTimeout(function(){if(seatDone)return;seatDone=true;seatStatus("Could not load the seating chart","Please refresh to try again.");},9000);
+    loadInvite(function(){var wt=INVITE.filter(function(g){return g.tno;});if(!INVITE.length){seatStatus("Seating chart not found","Please check your link, or ask the couple.");return;}if(!wt.length){seatStatus("Seating opens closer to the day","Tables are assigned once RSVPs are in \u2014 please check back.");return;}GUESTS=wt;BYNO={};wt.forEach(function(r){if(!BYNO[r.tno])BYNO[r.tno]={no:r.tno,name:r.tname,guests:[]};BYNO[r.tno].guests.push(r.name);});seatStatus("","");});
+  }
+
+  /* ===== rsvp ===== */
+  var rsvpStarted=false,RBODY,RSTATUS,PARTY=null,RCHOICES=[];
+  var MEALS=(CFG.menu||[]).filter(function(co){return co.alt&&co.items&&co.items.length>1;}).map(function(co){return {course:co.c,options:co.items.map(function(it){return it.d;})};});
+  var LSKEY="ybd_rsvp_"+EVENTCODE;
+  function lsGet(){try{return JSON.parse(localStorage.getItem(LSKEY)||"null");}catch(e){return null;}}
+  function lsSet(o){try{localStorage.setItem(LSKEY,JSON.stringify(o));}catch(e){}}
+  function lsClear(){try{localStorage.removeItem(LSKEY);}catch(e){}}
+  function rstatus(msg){if(RSTATUS)RSTATUS.innerHTML=msg?('<div>'+msg+'</div>'):"";}
+  function jsonp(params,ok,err){var cb="__ybdJ"+Math.random().toString(36).slice(2);var done=false;var s=document.createElement("script");window[cb]=function(r){done=true;try{delete window[cb];}catch(e){window[cb]=null;}if(s.parentNode)s.parentNode.removeChild(s);ok(r);};var sep=CFG.rsvpUrl.indexOf("?")>-1?"&":"?";s.src=CFG.rsvpUrl+sep+params+"&callback="+cb;s.onerror=function(){if(done)return;done=true;if(err)err();};document.body.appendChild(s);setTimeout(function(){if(done)return;done=true;if(err)err();},12000);}
+  function rsvpSearchStep(){RBODY.innerHTML='<div class="field"><input id="ybd-rq" type="search" placeholder="Start typing your name" autocomplete="off" aria-label="Your name"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div><div class="result" id="ybd-rout"></div>';var rq=app.querySelector("#ybd-rq"),rout=app.querySelector("#ybd-rout");var tmr;rq.addEventListener("input",function(e){clearTimeout(tmr);tmr=setTimeout(function(){rsvpSearch(e.target.value,rout);},110);});rout.addEventListener("click",function(e){var b=e.target.closest?e.target.closest(".choice"):null;if(!b)return;var g=RCHOICES[Number(b.getAttribute("data-i"))];if(g)openParty(g.household);});}
+  function rsvpSearch(q,rout){rout.className="result";rout.innerHTML="";if(!q.trim())return;var hits=[];INVITE.forEach(function(g){var s=mtch(g.name,q);if(s>0)hits.push({g:g,s:s});});if(!hits.length){rout.innerHTML='<div class="nomatch">We couldn\u2019t find that name.<small>Try your first or last name, or check with the couple.</small></div>';rout.className="result on";return;}hits.sort(function(a,b){return b.s-a.s;});var best=hits[0].s;var top=hits.filter(function(h){return h.s===best;}).map(function(h){return h.g;});if(top.length===1){openParty(top[0].household);return;}RCHOICES=top;rout.innerHTML='<div class="nomatch" style="font-size:1.2rem;margin-bottom:.6rem">Which one are you?</div>'+top.map(function(g,i){return '<button type="button" class="choice" data-i="'+i+'">'+esc(g.name)+(norm(g.household)!==norm(g.name)?' <span style="color:#8B857A">\u00b7 '+esc(g.household)+'</span>':'')+'</button>';}).join("");rout.className="result on";}
+  function openParty(household){var members=partyFor(household);if(!members.length){rsvpSearchStep();return;}PARTY={household:household,members:members};confirmStep();}
+  function confirmStep(){var mem=PARTY.members.map(function(g){return '<li>'+esc(g.name)+'</li>';}).join("");RBODY.innerHTML='<div class="kicker">Your invitation</div><div class="rhh">'+esc(PARTY.household)+'</div><ul class="rmembers">'+mem+'</ul><button type="button" class="rsvpbtn" id="ybd-rc-yes">That\u2019s us \u2014 continue</button><div style="text-align:center"><button type="button" class="rlink" id="ybd-rc-no">Not us? Search again</button></div>';app.querySelector("#ybd-rc-yes").addEventListener("click",function(){formStep(null);});app.querySelector("#ybd-rc-no").addEventListener("click",function(){PARTY=null;rsvpSearchStep();});}
+  function formStep(prefill){
+    var pmap={};if(prefill)prefill.forEach(function(p){pmap[norm(p.name)]=p;});
+    var rows=PARTY.members.map(function(g,i){
+      var pf=pmap[norm(g.name)]||{};
+      var att=(pf.attending==="yes"||pf.attending===true)?true:((pf.attending==="no"||pf.attending===false)?false:null);
+      var mealsel={};if(pf.meal){(""+pf.meal).split("|").forEach(function(seg){var idx=seg.indexOf(":");if(idx>-1)mealsel[norm(seg.slice(0,idx))]=seg.slice(idx+1).trim();});}
+      var mealHtml=MEALS.map(function(mc,mi){var opts='<option value="">Select\u2026</option>'+mc.options.map(function(o){return '<option'+(mealsel[norm(mc.course)]===o?' selected':'')+'>'+esc(o)+'</option>';}).join("");return '<label>'+esc(mc.course)+'</label><select data-meal="'+mi+'">'+opts+'</select>';}).join("");
+      return '<div class="rr" data-i="'+i+'"><div class="nm">'+esc(g.name)+'</div><div class="seg"><button type="button" data-att="yes"'+(att===true?' class="on"':'')+'>Attending</button><button type="button" data-att="no"'+(att===false?' class="on"':'')+'>Can\u2019t make it</button></div><div class="rf mealwrap"'+(att===true?'':' style="display:none"')+'>'+mealHtml+'<label>Dietary needs (optional)</label><input type="text" data-diet value="'+esc(pf.dietary||"")+'" placeholder="Allergies, preferences\u2026"></div></div>';
+    }).join("");
+    RBODY.innerHTML='<div class="kicker">'+esc(PARTY.household)+'</div><div style="margin:.3rem 0 1rem;color:#8B857A;font-size:.9rem">Let us know who\u2019s coming'+(MEALS.length?' and choose each meal':'')+'.</div>'+rows+'<div class="rf"><label>Note to the couple (optional)</label><input type="text" id="ybd-rmsg" placeholder="Anything you\u2019d like them to know"></div><button type="button" class="rsvpbtn" id="ybd-rsub">Save our RSVP</button><div style="text-align:center"><button type="button" class="rlink" id="ybd-rstart">This isn\u2019t us \u2014 start over</button></div>';
+    [].forEach.call(app.querySelectorAll(".rr"),function(rr){var seg=rr.querySelector(".seg"),wrap=rr.querySelector(".mealwrap");seg.addEventListener("click",function(e){var b=e.target.closest?e.target.closest("button[data-att]"):null;if(!b)return;[].forEach.call(seg.querySelectorAll("button"),function(x){x.classList.remove("on");});b.classList.add("on");wrap.style.display=(b.getAttribute("data-att")==="yes")?"block":"none";});});
+    app.querySelector("#ybd-rsub").addEventListener("click",submitRsvp);
+    app.querySelector("#ybd-rstart").addEventListener("click",function(){PARTY=null;lsClear();rsvpSearchStep();});
+  }
+  function submitRsvp(){
+    var guests=[],ok=true;
+    [].forEach.call(app.querySelectorAll(".rr"),function(rr){var g=PARTY.members[Number(rr.getAttribute("data-i"))];var on=rr.querySelector(".seg button.on");var attending=on?(on.getAttribute("data-att")==="yes"):null;var meal="",dietary="";if(attending===true){var parts=[];[].forEach.call(rr.querySelectorAll("select[data-meal]"),function(sel){var mi=Number(sel.getAttribute("data-meal"));if(sel.value)parts.push(MEALS[mi].course+": "+sel.value);});meal=parts.join(" | ");var di=rr.querySelector("input[data-diet]");dietary=di?di.value.trim():"";}if(attending===null)ok=false;guests.push({name:g.name,attending:attending,meal:meal,dietary:dietary});});
+    if(!ok){rstatus("Please choose Attending or Can\u2019t make it for everyone.");return;}
+    var msgEl=app.querySelector("#ybd-rmsg"),message=msgEl?msgEl.value.trim():"";
+    var btn=app.querySelector("#ybd-rsub");if(btn){btn.disabled=true;btn.textContent="Saving\u2026";}rstatus("");
+    var payload={household:PARTY.household,message:message,guests:guests.map(function(x){return {name:x.name,attending:x.attending?"yes":"no",meal:x.meal,dietary:x.dietary};})};
+    jsonp("action=submit&e="+encodeURIComponent(EVENTCODE)+"&d="+encodeURIComponent(JSON.stringify(payload)),function(r){lsSet({household:PARTY.household,guests:payload.guests,ts:Date.now()});doneStep();},function(){if(btn){btn.disabled=false;btn.textContent="Save our RSVP";}rstatus("Sorry, that didn\u2019t save \u2014 please check your connection and try again.");});
+  }
+  function doneStep(){RBODY.innerHTML='<div class="rdone"><div class="big">Thank you \u2014 you\u2019re all set</div><p class="rnote">Your RSVP for '+esc(PARTY.household)+' has been saved. You can change it any time from this device.</p><button type="button" class="rsvpbtn" id="ybd-redit" style="max-width:16rem;margin:1.4rem auto 0">Edit our reply</button></div>';app.querySelector("#ybd-redit").addEventListener("click",function(){var s=lsGet();formStep(s?s.guests:null);});}
+  function rsvpInit(){
+    if(rsvpStarted)return;rsvpStarted=true;
+    RBODY=app.querySelector("#ybd-rsvp-body");RSTATUS=app.querySelector("#ybd-rsvp-status");
+    rstatus("Loading\u2026");
+    loadInvite(function(){rstatus("");if(!INVITE.length){RBODY.innerHTML='<div class="nomatch">We couldn\u2019t load the guest list.<small>Please refresh, or check with the couple.</small></div>';return;}var saved=lsGet();if(saved&&saved.household){var members=partyFor(saved.household);if(!members.length){rsvpSearchStep();return;}PARTY={household:saved.household,members:members};jsonp("action=get&e="+encodeURIComponent(EVENTCODE)+"&h="+encodeURIComponent(saved.household),function(r){formStep(r&&r.ok&&r.guests&&r.guests.length?r.guests:saved.guests);},function(){formStep(saved.guests);});return;}rsvpSearchStep();});
   }
 }
 })();
