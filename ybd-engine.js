@@ -117,11 +117,13 @@ function norm(s){return(""+s).toLowerCase().normalize("NFD").replace(/[\u0300-\u
 function parseJSON(s,fallback){if(s==null||s==="")return fallback;try{return JSON.parse(s);}catch(e){return fallback;}}
 function boot(msg){var b=app.querySelector("#ybd-boot");if(b)b.textContent=msg;}
 function loadGviz(gid,cb){var s=document.createElement("script");s.src="https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?gid="+gid+"&headers=1&tqx=out:json;responseHandler:"+cb;s.onerror=function(){window[cb]&&window[cb](null);};document.body.appendChild(s);return s;}
-/* turn a gviz response into array of row objects keyed by normalised header */
+/* snake_case header -> object key, matching the engine's property names (event_code, couple_names, ...) */
+function hkey(s){return String(s==null?"":s).trim().toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");}
+/* turn a gviz response into array of row objects keyed by header */
 function gvizRows(resp){
   var out=[];if(!resp||!resp.table)return out;
   var t=resp.table,cols=t.cols||[],rows=t.rows||[],labels=[];
-  cols.forEach(function(c,i){labels[i]=norm((c&&c.label)||"");});
+  cols.forEach(function(c,i){labels[i]=hkey((c&&c.label)||"");});
   rows.forEach(function(r){var c=r.c||[],o={};for(var i=0;i<labels.length;i++){if(!labels[i])continue;var cell=c[i];o[labels[i]]=(cell&&cell.v!=null)?cell.v:"";}out.push(o);});
   return out;
 }
