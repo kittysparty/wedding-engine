@@ -115,6 +115,9 @@ function esc(s){return(""+s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","
 function ampName(s){return(""+s).split("&").map(function(p){return esc(p.trim());}).join(' <span class="amp">&amp;</span> ');}
 function norm(s){return(""+s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\s'-]/g," ").replace(/\s+/g," ").trim();}
 function parseJSON(s,fallback){if(s==null||s==="")return fallback;try{return JSON.parse(s);}catch(e){return fallback;}}
+/* gviz returns date cells as "Date(y,m,d,...)" strings (month 0-indexed); handle those plus plain ISO */
+function toDate(v){if(!v)return null;if(v instanceof Date)return v;var s=String(v);var m=s.match(/^Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)$/);if(m)return new Date(+m[1],+m[2],+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));var d=new Date(s);return isNaN(d)?null:d;}
+function fmtDate(d){try{return d.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});}catch(e){return "";}}
 function boot(msg){var b=app.querySelector("#ybd-boot");if(b)b.textContent=msg;}
 function loadGviz(gid,cb){var s=document.createElement("script");s.src="https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?gid="+gid+"&headers=1&tqx=out:json;responseHandler:"+cb;s.onerror=function(){window[cb]&&window[cb](null);};document.body.appendChild(s);return s;}
 /* snake_case header -> object key, matching the engine's property names (event_code, couple_names, ...) */
@@ -190,10 +193,12 @@ function render(CFG){
   if(CFG.order&&CFG.order.length)sections+='<div class="section"><div class="kicker">The day</div><h2>Order of the day</h2>'+tl(CFG.order)+'</div>';
   if(CFG.venue)sections+='<div class="section"><div class="kicker">Getting there</div><h2>Venue & travel</h2><p>'+esc(CFG.venue)+'</p></div>';
 
+  var wd=toDate(CFG.iso);
+  var metaText=(CFG.dateMeta&&!/^Date\(/.test(String(CFG.dateMeta)))?CFG.dateMeta:(wd?fmtDate(wd):"");
   var home='<div class="view on" data-id="home">'
   +'<div class="hero'+heroStyle+'><div class="pre">We\u2019re getting married</div>'
   +'<h1>'+ampName(CFG.couple)+'</h1>'
-  +(CFG.dateMeta?'<div class="meta">'+esc(CFG.dateMeta)+'</div>':'')
+  +(metaText?'<div class="meta">'+esc(metaText)+'</div>':'')
   +'<div class="cd" id="ybd-cd"></div></div>'
   +(cards?'<div class="acts">'+cards+'</div>':'')
   +'<div class="col">'+sections
@@ -248,7 +253,7 @@ function render(CFG){
   back.addEventListener("click",function(){go("home");});
 
   /* countdown */
-  (function(){if(!CFG.iso)return;var d=new Date(CFG.iso);var el=app.querySelector("#ybd-cd");if(!el||isNaN(d))return;var days=Math.max(0,Math.ceil((d-new Date())/86400000));el.textContent=days===0?"Today is the day":(days+(days===1?" day to go":" days to go"));})();
+  (function(){var el=app.querySelector("#ybd-cd");if(!el||!wd)return;var days=Math.max(0,Math.ceil((wd-new Date())/86400000));el.textContent=days===0?"Today is the day":(days+(days===1?" day to go":" days to go"));})();
 
   /* ===== live seat search (reads the guests tab) ===== */
   var GUESTS=[],BYNO={},CHOICES=[],seatDone=false,seatStarted=false;
