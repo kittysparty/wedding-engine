@@ -17,6 +17,7 @@
 
 var RSVP_HEADERS = ["event_code","household","guest_name","attending","meal","dietary","song","updated_at","source"];
 var LOG_HEADERS  = ["timestamp","event_code","household","guest_name","attending","meal","dietary","song","source"];
+var OP_SECRET    = "Z2qoPx9Wl66h7pA7"; // operator password for the "New wedding" setup form — change here if needed
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
@@ -27,6 +28,8 @@ function doGet(e) {
     else if (p.action === "get")        out = handleGet(p);
     else if (p.action === "dashboard")  out = handleDashboard(p);
     else if (p.action === "admin_save") out = handleAdminSave(p);
+    else if (p.action === "provision")  out = handleProvision(p);
+    else if (p.action === "add_guests") out = handleAddGuests(p);
     else                                out = { ok: false, error: "unknown action" };
   } catch (err) {
     out = { ok: false, error: String(err) };
@@ -124,6 +127,66 @@ function handleGet(p) {
   var out = readRsvp_(ss, code).filter(function (r) { return norm_(r.household) === norm_(household); })
     .map(function (r) { return { name: r.name, attending: r.attending, meal: r.meal, dietary: r.dietary }; });
   return { ok: true, guests: out };
+}
+
+function handleProvision(p) {
+  if (String(p.secret || "") !== OP_SECRET) return { ok: false, error: "unauthorized" };
+  var data = JSON.parse(p.d || "{}");
+  var cfg = data.config || {};
+  var guests = data.guests || [];
+  var code = String(cfg.event_code || "").trim();
+  if (!code) return { ok: false, error: "missing event_code" };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ss = SpreadsheetApp.getActive();
+    var cs = ss.getSheetByName("config");
+    if (!cs) return { ok: false, error: "no config tab" };
+    var cv = cs.getDataRange().getValues();
+    var cidx = headerIdx_(cv[0]);
+    for (var r = 1; r < cv.length; r++) {
+      if (norm_(cv[r][cidx["event_code"]]) === norm_(code)) return { ok: false, error: "event_code already exists" };
+    }
+    var header = cv[0];
+    cs.appendRow(header.map(function (h) { var k = norm_(h).replace(/\s+/g, "_"); var v = cfg[k]; return v == null ? "" : v; }));
+    var gs = ss.getSheetByName("guests");
+    if (!gs) { gs = ss.insertSheet("guests"); gs.appendRow(["event_code","household","guest_name","table_number","table_name"]); }
+    var gheader = gs.getDataRange().getValues()[0] || ["event_code","household","guest_name","table_number","table_name"];
+    guests.forEach(function (g) {
+      gs.appendRow(gheader.map(function (h) {
+        var k = norm_(h).replace(/\s+/g, "_");
+        if (k === "event_code") return code;
+        if (k === "household") return String(g.household || "");
+        if (k === "guest_name") return String(g.name || g.guest_name || "");
+        return "";
+      }));
+    });
+    return { ok: true, event_code: code, slug: String(cfg.slug || ""), guests: guests.length };
+  } finally { lock.releaseLock(); }
+}
+
+function handleAddGuests(p) {
+  if (String(p.secret || "") !== OP_SECRET) return { ok: false, error: "unauthorized" };
+  var code = String(p.e || "").trim();
+  var guests = JSON.parse(p.d || "[]");
+  if (!code || !guests.length) return { ok: false, error: "missing" };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ss = SpreadsheetApp.getActive();
+    var gs = ss.getSheetByName("guests");
+    if (!gs) { gs = ss.insertSheet("guests"); gs.appendRow(["event_code","household","guest_name","table_number","table_name"]); }
+    var gheader = gs.getDataRange().getValues()[0] || ["event_code","household","guest_name","table_number","table_name"];
+    var rows = guests.map(function (g) {
+      return gheader.map(function (h) {
+        var k = norm_(h).replace(/\s+/g, "_");
+        if (k === "event_code") return code;
+        if (k === "household") return String(g.household || "");
+        if (k === "guest_name") return String(g.name || g.guest_name || "");
+        return "";
+      });
+    });
+    gs.getRange(gs.getLastRow() + 1, 1, rows.length, gheader.length).setValues(rows);
+    return { ok: true, added: guests.length };
+  } finally { lock.releaseLock(); }
 }
 
 function handleDashboard(p) {
