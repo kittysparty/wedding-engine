@@ -227,7 +227,14 @@ function render(CFG){
 
   var rsvp=has.rsvp?'<div class="view" data-id="rsvp"><div class="col pad finder rsvp"><div class="kicker">RSVP</div><div class="lab">Will you join us?</div><div id="ybd-rsvp-body"></div><div class="seatstatus" id="ybd-rsvp-status"></div></div></div>':'';
 
-  var photos=(has.photos&&CFG.wedibox)?('<div class="view frame" data-id="photos"><iframe data-src="'+CFG.wedibox+'" allow="camera;microphone;clipboard-write;encrypted-media"></iframe></div>'):'';
+  var photos="";
+  if(has.photos&&CFG.wedibox){
+    if(/embed\.wedibox\.com/i.test(CFG.wedibox)){
+      photos='<div class="view frame" data-id="photos"><iframe data-src="'+CFG.wedibox+'" allow="camera;microphone;clipboard-write;encrypted-media"></iframe></div>';
+    }else{
+      photos='<div class="view" data-id="photos"><div class="col pad"><div class="soon"><div class="big">Share your photos</div><p>Add your snaps to our shared album — and see everyone else’s.</p><a class="rsvpbtn" style="max-width:18rem;margin:1.6rem auto 0;display:block;text-align:center;text-decoration:none" href="'+esc(CFG.wedibox)+'" target="_blank" rel="noopener">Open our photo album →</a></div></div></div>';
+    }
+  }
 
   shell.innerHTML='<div class="bar">'
   +'<button type="button" class="back" id="ybd-back">← Back</button>'
