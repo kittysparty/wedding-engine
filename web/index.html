@@ -122,13 +122,20 @@ html,body{height:100%;margin:0;background:#F1EFE9}
 #ybd-app .landing h1{font-family:'Newsreader',serif;font-weight:300;font-style:italic;font-size:2.4rem;margin-bottom:.6rem}
 #ybd-app .landing p{color:#8B857A}
 #ybd-app .landing a{color:#5E7488}
-#ybd-app .phintro{color:#8B857A;margin:.4rem 0 1.2rem}
-#ybd-app .phgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:1.5rem}
-#ybd-app .phgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.2rem;cursor:pointer;background:#e7e3da;display:block}
-#ybd-app .phempty{text-align:center;color:#8B857A;padding:2.5rem 0;font-family:'Newsreader',serif;font-style:italic;font-size:1.2rem}
-#ybd-app .phlight{position:fixed;inset:0;background:rgba(27,26,22,.93);display:none;align-items:center;justify-content:center;z-index:2147483600;padding:1.2rem}
+#ybd-app .phintro{color:#8B857A;margin:.4rem 0 1.1rem}
+#ybd-app .phname{margin-bottom:1rem}
+#ybd-app .phname label{display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#8B857A;margin-bottom:.3rem}
+#ybd-app .phname input{width:100%;font-family:'Inter';font-size:1rem;color:#1B1A16;background:#fff;border:1px solid #DBD6CB;border-radius:.2rem;padding:.6rem .7rem;outline:none}
+#ybd-app .phgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-top:1.6rem}
+#ybd-app .phcell{margin:0}
+#ybd-app .phcell img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.2rem;cursor:pointer;background:#e7e3da;display:block}
+#ybd-app .phcell figcaption{font-size:.78rem;color:#5c564d;margin-top:.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ybd-app .phcell figcaption .anon{color:#b3ada1;font-style:italic;font-family:'Newsreader',serif}
+#ybd-app .phempty{text-align:center;color:#8B857A;padding:2.5rem 0;font-family:'Newsreader',serif;font-style:italic;font-size:1.2rem;grid-column:1/-1}
+#ybd-app .phlight{position:fixed;inset:0;background:rgba(27,26,22,.93);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:2147483600;padding:1.2rem}
 #ybd-app .phlight.on{display:flex}
-#ybd-app .phlight img{max-width:100%;max-height:100%;border-radius:.3rem}
+#ybd-app .phlight img{max-width:100%;max-height:85%;border-radius:.3rem}
+#ybd-app .phlight .cap{color:#EADFCB;font-family:'Newsreader',serif;font-style:italic;margin-top:.9rem;font-size:1.05rem}
 #ybd-app .phlight .x{position:absolute;top:1rem;right:1.1rem;color:#fff;background:none;border:none;font-size:1.8rem;cursor:pointer;line-height:1}
 `;
 var st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
@@ -153,7 +160,7 @@ seat:'<svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path 
 menu:'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
 photos:'<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6l1.5-2h5L16 6"/><circle cx="12" cy="12.5" r="3.5"/></svg>'
 };
-var LABELS={rsvp:["RSVP","Let us know you’re coming"],seat:["Find your seat","Which table am I on?"],menu:["Menu & timeline","The food & the day"],photos:["Photos","Share your snaps"]};
+var LABELS={rsvp:["RSVP","Let us know you’re coming"],seat:["Find your seat","Which table am I on?"],menu:["Menu & timeline","The food & the day"],photos:["Photo wall","Share your snaps"]};
 function tl(rows){return '<ul class="tl">'+rows.map(function(r){return '<li><span class="tm">'+esc(r[0])+'</span><span>'+esc(r[1])+'</span></li>';}).join("")+'</ul>';}
 
 /* ---------- boot: slug from path -> fetch event ---------- */
@@ -236,8 +243,9 @@ function render(CFG){
   var rsvp=has.rsvp?'<div class="view" data-id="rsvp"><div class="col pad finder rsvp"><div class="kicker">RSVP</div><div class="lab">Will you join us?</div><div id="ybd-rsvp-body"></div><div class="seatstatus" id="ybd-rsvp-status"></div></div></div>':'';
 
   var photos=has.photos?('<div class="view" data-id="photos"><div class="col pad">'
-  +'<div class="kicker">Shared album</div><h2>Photos</h2>'
+  +'<div class="kicker">Photo wall</div><h2>Photo wall</h2>'
   +'<p class="phintro">Add your snaps from the day — everyone’s photos, all in one place.</p>'
+  +'<div class="phname"><label for="ybd-ph-name">Your name</label><input type="text" id="ybd-ph-name" placeholder="So everyone knows whose photo it is" autocomplete="name" maxlength="80"></div>'
   +'<input type="file" id="ybd-ph-input" accept="image/*" multiple style="display:none">'
   +'<button type="button" class="rsvpbtn" id="ybd-ph-add" style="max-width:18rem;margin:0 auto">Add photos</button>'
   +'<div class="seatstatus" id="ybd-ph-status" style="text-align:center"></div>'
@@ -345,36 +353,40 @@ function render(CFG){
 
   /* ===== photos (native Supabase album) ===== */
   var photosStarted=false,PHLIGHT=null;
-  function openLight(url){if(!PHLIGHT){PHLIGHT=document.createElement("div");PHLIGHT.className="phlight";PHLIGHT.innerHTML='<button type="button" class="x" aria-label="Close">×</button><img alt="">';app.appendChild(PHLIGHT);PHLIGHT.addEventListener("click",function(){PHLIGHT.classList.remove("on");});}PHLIGHT.querySelector("img").src=url;PHLIGHT.classList.add("on");}
+  function openLight(url,by){if(!PHLIGHT){PHLIGHT=document.createElement("div");PHLIGHT.className="phlight";PHLIGHT.innerHTML='<button type="button" class="x" aria-label="Close">×</button><img alt=""><div class="cap"></div>';app.appendChild(PHLIGHT);PHLIGHT.addEventListener("click",function(){PHLIGHT.classList.remove("on");});}PHLIGHT.querySelector("img").src=url;PHLIGHT.querySelector(".cap").textContent=by?("Posted by "+by):"";PHLIGHT.classList.add("on");}
   function photosInit(){
     if(photosStarted)return;photosStarted=true;
-    var add=app.querySelector("#ybd-ph-add"),input=app.querySelector("#ybd-ph-input"),grid=app.querySelector("#ybd-ph-grid"),status=app.querySelector("#ybd-ph-status");
-    add.addEventListener("click",function(){input.click();});
+    var add=app.querySelector("#ybd-ph-add"),input=app.querySelector("#ybd-ph-input"),grid=app.querySelector("#ybd-ph-grid"),status=app.querySelector("#ybd-ph-status"),nameEl=app.querySelector("#ybd-ph-name");
+    var NAMEKEY="ybd_ph_name_"+EVENTCODE;
+    try{nameEl.value=localStorage.getItem(NAMEKEY)||"";}catch(e){}
+    nameEl.addEventListener("input",function(){try{localStorage.setItem(NAMEKEY,nameEl.value.trim());}catch(e){}});
+    add.addEventListener("click",function(){if(!nameEl.value.trim()){status.innerHTML="<div>Please add your name first.</div>";nameEl.focus();return;}input.click();});
     input.addEventListener("change",function(){var files=[].slice.call(input.files||[]);input.value="";if(files.length)uploadFiles(files);});
-    grid.addEventListener("click",function(e){var img=e.target.closest?e.target.closest("img"):null;if(img)openLight(img.getAttribute("data-full"));});
+    grid.addEventListener("click",function(e){var img=e.target.closest?e.target.closest("img"):null;if(img)openLight(img.getAttribute("data-full"),img.getAttribute("data-by"));});
     loadPhotos();
     function loadPhotos(){
       grid.innerHTML='<div class="phempty">Loading photos…</div>';
       apiGet("action=photo_list&e="+encodeURIComponent(EVENTCODE)).then(function(r){
-        if(!r||!r.ok){grid.innerHTML='<div class="phempty">Couldn’t load the album — please refresh.</div>';return;}
+        if(!r||!r.ok){grid.innerHTML='<div class="phempty">Couldn’t load the wall — please refresh.</div>';return;}
         var photos=r.photos||[];
         if(!photos.length){grid.innerHTML='<div class="phempty">No photos yet — be the first to add one.</div>';return;}
-        grid.innerHTML=photos.map(function(p){return '<img loading="lazy" src="'+esc(p.url)+'" data-full="'+esc(p.url)+'" alt="">';}).join("");
-      }).catch(function(){grid.innerHTML='<div class="phempty">Couldn’t load the album — please refresh.</div>';});
+        grid.innerHTML=photos.map(function(p){var by=(""+(p.uploader||"")).trim();return '<figure class="phcell"><img loading="lazy" src="'+esc(p.url)+'" data-full="'+esc(p.url)+'" data-by="'+esc(by)+'" alt=""><figcaption>'+(by?esc(by):'<span class="anon">Guest</span>')+'</figcaption></figure>';}).join("");
+      }).catch(function(){grid.innerHTML='<div class="phempty">Couldn’t load the wall — please refresh.</div>';});
     }
-    function uploadOne(file){
-      return apiPost({action:"photo_sign",e:EVENTCODE,filename:file.name,contentType:file.type||"application/octet-stream"}).then(function(r){
-        if(!r||!r.ok||!r.signedUrl)throw new Error("sign");
-        return fetch(r.signedUrl,{method:"PUT",headers:{"content-type":file.type||"application/octet-stream","x-upsert":"true"},body:file}).then(function(resp){if(!resp.ok)throw new Error("put "+resp.status);});
-      });
+    function uploadOne(file,uploader){
+      var qs="action=photo_upload&e="+encodeURIComponent(EVENTCODE)+"&filename="+encodeURIComponent(file.name)+"&uploader="+encodeURIComponent(uploader);
+      return fetch(API+"?"+qs,{method:"POST",headers:{"content-type":file.type||"application/octet-stream"},body:file}).then(function(resp){return resp.json();}).then(function(r){if(!r||!r.ok)throw new Error((r&&r.error)||"upload");});
     }
     function uploadFiles(files){
+      var uploader=nameEl.value.trim();
+      if(!uploader){status.innerHTML="<div>Please add your name first.</div>";nameEl.focus();return;}
+      try{localStorage.setItem(NAMEKEY,uploader);}catch(e){}
       var total=files.length,done=0,fail=0;
       add.disabled=true;
       status.innerHTML="<div>Uploading 0 / "+total+"…</div>";
       var seq=Promise.resolve();
       files.forEach(function(file){
-        seq=seq.then(function(){return uploadOne(file).then(function(){done++;},function(){fail++;}).then(function(){status.innerHTML="<div>Uploading "+(done+fail)+" / "+total+"…</div>";});});
+        seq=seq.then(function(){return uploadOne(file,uploader).then(function(){done++;},function(){fail++;}).then(function(){status.innerHTML="<div>Uploading "+(done+fail)+" / "+total+"…</div>";});});
       });
       seq.then(function(){add.disabled=false;status.innerHTML="<div>"+(fail?(done+" added, "+fail+" couldn’t upload."):(done+" photo"+(done===1?"":"s")+" added — thank you!"))+"</div>";loadPhotos();setTimeout(function(){status.innerHTML="";},4500);});
     }
