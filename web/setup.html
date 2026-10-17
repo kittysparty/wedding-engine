@@ -36,6 +36,12 @@ html,body{background:#F1EFE9;margin:0}
 #ybd-setup .feats{display:flex;flex-wrap:wrap;gap:1rem;margin-top:.4rem}
 #ybd-setup .feats label{display:inline-flex;align-items:center;gap:.4rem;margin:0;text-transform:none;letter-spacing:0;font-size:.95rem;color:#1B1A16}
 #ybd-setup .feats input{width:auto}
+#ybd-setup .themes{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.4rem}
+#ybd-setup .themeopt{display:flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #DBD6CB;border-radius:999px;padding:.4rem .8rem .4rem .5rem;font-family:'Inter';font-size:.9rem;color:#1B1A16;cursor:pointer}
+#ybd-setup .themeopt.on{border-color:#1B1A16;box-shadow:inset 0 0 0 1px #1B1A16}
+#ybd-setup .themeopt .sw{display:inline-flex}
+#ybd-setup .themeopt .sw i{width:14px;height:14px;border-radius:50%;display:block;margin-left:-4px;border:1px solid rgba(0,0,0,.08)}
+#ybd-setup .themeopt .sw i:first-child{margin-left:0}
 #ybd-setup .card{background:#fff;border:1px solid #DBD6CB;border-radius:.3rem;padding:.9rem 1rem;margin-bottom:.7rem}
 #ybd-setup .mini{background:none;border:none;color:#5E7488;font-size:.85rem;cursor:pointer;text-decoration:underline;padding:.3rem 0}
 #ybd-setup .mini.rm{color:#9a6a5a;float:right;text-decoration:none}
@@ -77,6 +83,14 @@ function makeRepeater(mountSel,addLabel,tpl,onAdd){
 
 var S=getSettings();
 
+var THEME_OPTS=[
+ {k:"editorial",n:"Editorial",c:["#F1EFE9","#5E7488","#E3C9A6"]},
+ {k:"romantic",n:"Romantic",c:["#FBF5F1","#B9776A","#D9B98A"]},
+ {k:"botanical",n:"Botanical",c:["#F4F2EA","#5C7A5E","#C9B178"]},
+ {k:"classic",n:"Classic",c:["#FFFFFF","#161616","#B59A6A"]}
+];
+var themeSwatches=THEME_OPTS.map(function(t,i){return '<button type="button" class="themeopt'+(i===0?" on":"")+'" data-theme="'+t.k+'"><span class="sw">'+t.c.map(function(c){return '<i style="background:'+c+'"></i>';}).join("")+'</span>'+t.n+'</button>';}).join("");
+
 app.innerHTML=''
 +'<div class="wm">Your Big Day</div><h1>New wedding</h1>'
 +'<div class="set"><label>Operator password</label><input id="s-secret" type="password" value="'+esc(S.secret||"")+'"><div class="hint">Saved on this device only.</div></div>'
@@ -86,6 +100,7 @@ app.innerHTML=''
 +'<div class="row"><div><label>Page link (slug)</label><input id="f-slug" placeholder="sarah-and-tom"></div><div><label>Event code</label><input id="f-code" placeholder="auto"></div></div>'
 +'<div class="hint">Page will live at '+esc(ORIGIN)+'/<b id="slugprev">your-slug</b></div>'
 +'<h2>Look & features</h2>'
++'<label>Page theme</label><div class="themes" id="f-themes">'+themeSwatches+'</div>'
 +'<label>Hero photo URL (the couple’s photo)</label><input id="f-hero" placeholder="https://...">'
 +'<label>Features shown to guests</label><div class="feats">'
 +'<label><input type="checkbox" class="feat" value="rsvp" checked> RSVP</label>'
@@ -115,6 +130,8 @@ var repMenu=makeRepeater("#m-menu","Add course",'<label>Course name</label><inpu
 });
 repStory.addRow();repOrder.addRow();repMenu.addRow();
 
+[].forEach.call(app.querySelectorAll(".themeopt"),function(b){b.addEventListener("click",function(){[].forEach.call(app.querySelectorAll(".themeopt"),function(x){x.classList.remove("on");});b.classList.add("on");});});
+
 function syncSlug(){var sp=$("#slugprev");var slug=val("#f-slug")||slugify(val("#f-couple"));sp.textContent=slug||"your-slug";}
 $("#f-couple").addEventListener("input",function(){if(!$("#f-slug").value)syncSlug();});
 $("#f-slug").addEventListener("input",syncSlug);
@@ -133,7 +150,7 @@ function collect(){
   var cfg={
     event_code:code,slug:slug,couple_names:couple,
     date_meta:fmtMeta(date),wedding_iso:date?(date+"T"+time+":00"):"",
-    theme:"editorial",logo:LOGO,hero_photo:val("#f-hero"),
+    theme:(function(){var el=app.querySelector(".themeopt.on");return el?el.getAttribute("data-theme"):"editorial";})(),logo:LOGO,hero_photo:val("#f-hero"),
     features:feats,wedibox_url:val("#f-wedibox"),
     venue_text:val("#f-venue"),
     story:story,order_of_day:order,menu:menu,menu_order:run,
