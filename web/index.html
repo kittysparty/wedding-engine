@@ -138,6 +138,19 @@ html,body{height:100%;margin:0;background:var(--paper)}
 #ybd-app .phlight img{max-width:100%;max-height:85%;border-radius:.3rem}
 #ybd-app .phlight .cap{color:#EADFCB;font-family:var(--fd);font-style:italic;margin-top:.9rem;font-size:1.05rem}
 #ybd-app .phlight .x{position:absolute;top:1rem;right:1.1rem;color:#fff;background:none;border:none;font-size:1.8rem;cursor:pointer;line-height:1}
+/* ===== signature skin — matches the Your Big Day marketing creative ===== */
+#ybd-app.t-signature .bar{border-bottom-color:var(--rule);background:rgba(245,239,227,.9)}
+#ybd-app.t-signature .bar .brand .wm{color:var(--gold);letter-spacing:.26em}
+#ybd-app.t-signature .hero h1,#ybd-app.t-signature h2,#ybd-app.t-signature .act .t,#ybd-app.t-signature .seat,#ybd-app.t-signature .course .d,#ybd-app.t-signature .finder .lab,#ybd-app.t-signature .nomatch,#ybd-app.t-signature .rhh,#ybd-app.t-signature .rdone .big,#ybd-app.t-signature .soon .big,#ybd-app.t-signature .seatstatus .big,#ybd-app.t-signature .landing h1,#ybd-app.t-signature .rr .nm,#ybd-app.t-signature .hero .cd{font-style:normal}
+#ybd-app.t-signature .hero h1{font-weight:500;letter-spacing:.005em}
+#ybd-app.t-signature .hero h1 .amp{color:var(--gold)}
+#ybd-app.t-signature h2,#ybd-app.t-signature .act .t,#ybd-app.t-signature .rhh,#ybd-app.t-signature .finder .lab{font-weight:500}
+#ybd-app.t-signature .act{border-radius:.7rem;box-shadow:0 10px 26px rgba(74,62,34,.07)}
+#ybd-app.t-signature .act .t{font-size:1.3rem}
+#ybd-app.t-signature .rsvpbtn{background:var(--accent)}
+#ybd-app.t-signature .seg{border-color:var(--accent)}
+#ybd-app.t-signature .seg button.on{background:var(--accent);color:#fff}
+#ybd-app.t-signature .field{border-bottom-color:var(--accent)}
 `;
 var st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
 
@@ -157,6 +170,7 @@ function apiPost(payload){return fetch(API,{method:"POST",headers:{"Content-Type
 
 /* ---------- themes (palette + font skins; same layout) ---------- */
 var THEMES={
+  signature:{paper:"#F5EFE3",ink:"#333A27",sec:"#8C8574",accent:"#5E6B45",rule:"#E6DDCB",gold:"#B08C55",fd:"'Cormorant Garamond',serif",fb:"'Inter',system-ui,sans-serif",font:"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap"},
   editorial:{paper:"#F1EFE9",ink:"#1B1A16",sec:"#8B857A",accent:"#5E7488",rule:"#DBD6CB",gold:"#E3C9A6",fd:"'Newsreader',serif",fb:"'Inter',system-ui,sans-serif"},
   romantic:{paper:"#FBF5F1",ink:"#40312C",sec:"#B28F86",accent:"#B9776A",rule:"#ECDDD5",gold:"#D9B98A",fd:"'Cormorant Garamond',serif",fb:"'Inter',system-ui,sans-serif",font:"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap"},
   botanical:{paper:"#F4F2EA",ink:"#24302A",sec:"#83907F",accent:"#5C7A5E",rule:"#D9DECF",gold:"#C9B178",fd:"'Fraunces',serif",fb:"'Inter',system-ui,sans-serif",font:"https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap"},
@@ -165,12 +179,15 @@ var THEMES={
 var loadedFonts={};
 function loadFont(href){if(!href||loadedFonts[href])return;loadedFonts[href]=1;var l=document.createElement("link");l.rel="stylesheet";l.href=href;document.head.appendChild(l);}
 function applyTheme(name){
-  var t=THEMES[norm(name)]||THEMES.editorial;
+  var key=THEMES[norm(name)]?norm(name):"signature";
+  var t=THEMES[key];
   if(t.font)loadFont(t.font);
   var r=document.documentElement.style;
   r.setProperty("--paper",t.paper);r.setProperty("--ink",t.ink);r.setProperty("--sec",t.sec);
   r.setProperty("--accent",t.accent);r.setProperty("--rule",t.rule);r.setProperty("--gold",t.gold);
   r.setProperty("--fd",t.fd);r.setProperty("--fb",t.fb);
+  app.className=(app.className||"").replace(/\bt-[\w-]+\b/g,"").trim();
+  app.classList.add("t-"+key);
 }
 
 var IC={
@@ -205,7 +222,7 @@ function buildConfig(e){
     photo:e.hero_photo||"",
     dateMeta:e.date_meta||"",
     iso:e.wedding_iso||"",
-    theme:norm(e.theme||"editorial"),
+    theme:norm(e.theme||"signature"),
     features:feats,
     wedibox:e.wedibox_url||"",
     venue:e.venue_text||"",

@@ -84,6 +84,7 @@ function makeRepeater(mountSel,addLabel,tpl,onAdd){
 var S=getSettings();
 
 var THEME_OPTS=[
+ {k:"signature",n:"Signature",c:["#F5EFE3","#5E6B45","#B08C55"]},
  {k:"editorial",n:"Editorial",c:["#F1EFE9","#5E7488","#E3C9A6"]},
  {k:"romantic",n:"Romantic",c:["#FBF5F1","#B9776A","#D9B98A"]},
  {k:"botanical",n:"Botanical",c:["#F4F2EA","#5C7A5E","#C9B178"]},
@@ -150,7 +151,7 @@ function collect(){
   var cfg={
     event_code:code,slug:slug,couple_names:couple,
     date_meta:fmtMeta(date),wedding_iso:date?(date+"T"+time+":00"):"",
-    theme:(function(){var el=app.querySelector(".themeopt.on");return el?el.getAttribute("data-theme"):"editorial";})(),logo:LOGO,hero_photo:val("#f-hero"),
+    theme:(function(){var el=app.querySelector(".themeopt.on");return el?el.getAttribute("data-theme"):"signature";})(),logo:LOGO,hero_photo:val("#f-hero"),
     features:feats,wedibox_url:val("#f-wedibox"),
     venue_text:val("#f-venue"),
     story:story,order_of_day:order,menu:menu,menu_order:run,
