@@ -58,9 +58,8 @@ html,body{height:100%;margin:0;background:var(--paper)}
 #ybd-app .act .ico{width:1.7rem;height:1.7rem;color:var(--accent);margin-bottom:.7rem;stroke-width:1.5;fill:none;stroke:currentColor}
 #ybd-app .act .t{font-family:var(--fd);font-style:italic;font-size:1.2rem}
 #ybd-app .act .d{font-size:.8rem;color:var(--sec);margin-top:.1rem}
-#ybd-app .herobanner{max-width:40rem;margin:.1rem auto 0;padding:0 1.25rem}
-#ybd-app .herobanner .img{width:100%;height:clamp(160px,36vw,240px);border-radius:.85rem;background:#e7e3da center/cover no-repeat;box-shadow:0 14px 34px rgba(74,62,34,.14)}
-#ybd-app .navlist{max-width:40rem;margin:1.5rem auto .5rem;padding:0 1.25rem;display:flex;flex-direction:column}
+#ybd-app .phero{width:100%;min-height:clamp(340px,54vh,520px);background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;flex-direction:column;justify-content:flex-start}
+#ybd-app .navlist{max-width:40rem;margin:.9rem auto .5rem;padding:0 1.25rem;display:flex;flex-direction:column}
 #ybd-app .navrow{display:flex;align-items:center;gap:1rem;width:100%;background:none;border:none;border-top:1px solid var(--rule);padding:.85rem .15rem;cursor:pointer;text-align:left;font-family:var(--fb);transition:padding-left .15s}
 #ybd-app .navrow:last-child{border-bottom:1px solid var(--rule)}
 #ybd-app .navrow .th{width:3.7rem;height:3.7rem;border-radius:.55rem;background:#e7e3da center/cover no-repeat;flex:0 0 auto}
@@ -269,12 +268,9 @@ function render(CFG){
 
   var wd=toDate(CFG.iso);
   var metaText=CFG.dateMeta||(wd?fmtDate(wd):"");
+  var heroInner='<div class="hero"><h1>'+ampName(CFG.couple)+'</h1>'+(metaText?'<div class="meta">'+esc(metaText)+'</div>':'')+'<div class="cd" id="ybd-cd"></div></div>';
   var home='<div class="view on" data-id="home">'
-  +'<div class="hero">'
-  +'<h1>'+ampName(CFG.couple)+'</h1>'
-  +(metaText?'<div class="meta">'+esc(metaText)+'</div>':'')
-  +'<div class="cd" id="ybd-cd"></div></div>'
-  +(CFG.photo?'<div class="herobanner"><div class="img" style="background-image:url(\''+CFG.photo+'\')"></div></div>':'')
+  +(CFG.photo?'<header class="phero" style="background-image:linear-gradient(180deg,rgba(248,244,236,.95) 0%,rgba(248,244,236,.78) 32%,rgba(248,244,236,.25) 60%,rgba(248,244,236,0) 85%),url(\''+CFG.photo+'\')">'+heroInner+'</header>':heroInner)
   +(navItems?'<nav class="navlist">'+navItems+'</nav>':'')
   +'<div class="col">'+sections
   +'<div class="foot">Have your wedding coming up? Set up your digital experience with <a href="https://yourbigday.events/contact-us/"><b>Your Big Day</b></a></div>'
