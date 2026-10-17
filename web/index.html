@@ -40,7 +40,7 @@ html,body{height:100%;margin:0;background:var(--paper)}
 @keyframes ybdf{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 #ybd-app .col{max-width:40rem;margin:0 auto}
 #ybd-app .pad{padding:1.6rem 1.25rem 3rem}
-#ybd-app .hero{text-align:center;max-width:40rem;margin:0 auto;padding:2.6rem 1.25rem 2rem}
+#ybd-app .hero{text-align:center;max-width:40rem;margin:0 auto;padding:2.3rem 1.25rem 1.3rem}
 #ybd-app .hero.photohero{max-width:none;color:#fff;min-height:66vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background-size:cover;background-position:center;padding:3rem 1.5rem}
 #ybd-app .hero.photohero .pre{color:#EADFCB}
 #ybd-app .hero.photohero h1{color:#fff}
@@ -58,6 +58,17 @@ html,body{height:100%;margin:0;background:var(--paper)}
 #ybd-app .act .ico{width:1.7rem;height:1.7rem;color:var(--accent);margin-bottom:.7rem;stroke-width:1.5;fill:none;stroke:currentColor}
 #ybd-app .act .t{font-family:var(--fd);font-style:italic;font-size:1.2rem}
 #ybd-app .act .d{font-size:.8rem;color:var(--sec);margin-top:.1rem}
+#ybd-app .herobanner{max-width:40rem;margin:.1rem auto 0;padding:0 1.25rem}
+#ybd-app .herobanner .img{width:100%;height:clamp(160px,36vw,240px);border-radius:.85rem;background:#e7e3da center/cover no-repeat;box-shadow:0 14px 34px rgba(74,62,34,.14)}
+#ybd-app .navlist{max-width:40rem;margin:1.5rem auto .5rem;padding:0 1.25rem;display:flex;flex-direction:column}
+#ybd-app .navrow{display:flex;align-items:center;gap:1rem;width:100%;background:none;border:none;border-top:1px solid var(--rule);padding:.85rem .15rem;cursor:pointer;text-align:left;font-family:var(--fb);transition:padding-left .15s}
+#ybd-app .navrow:last-child{border-bottom:1px solid var(--rule)}
+#ybd-app .navrow .th{width:3.7rem;height:3.7rem;border-radius:.55rem;background:#e7e3da center/cover no-repeat;flex:0 0 auto}
+#ybd-app .navrow .nl{flex:1 1 auto;font-family:var(--fd);font-style:italic;font-size:1.3rem;color:var(--ink)}
+#ybd-app .navrow .chev{width:1.15rem;height:1.15rem;stroke:var(--sec);fill:none;stroke-width:1.7;flex:0 0 auto}
+#ybd-app .navrow:hover{padding-left:.45rem}
+#ybd-app .navrow:hover .nl{color:var(--accent)}
+#ybd-app .navrow:hover .chev{stroke:var(--accent)}
 #ybd-app .section{padding:1.7rem 1.25rem;border-top:1px solid var(--rule)}
 #ybd-app .kicker{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem}
 #ybd-app h2{font-family:var(--fd);font-weight:300;font-style:italic;font-size:1.75rem;line-height:1.1}
@@ -151,6 +162,7 @@ html,body{height:100%;margin:0;background:var(--paper)}
 #ybd-app.t-signature .seg{border-color:var(--accent)}
 #ybd-app.t-signature .seg button.on{background:var(--accent);color:#fff}
 #ybd-app.t-signature .field{border-bottom-color:var(--accent)}
+#ybd-app.t-signature .navrow .nl{font-style:normal;font-weight:500}
 `;
 var st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
 
@@ -197,6 +209,13 @@ menu:'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path 
 photos:'<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6l1.5-2h5L16 6"/><circle cx="12" cy="12.5" r="3.5"/></svg>'
 };
 var LABELS={rsvp:["RSVP","Let us know you’re coming"],seat:["Find your seat","Which table am I on?"],menu:["Menu & timeline","The food & the day"],photos:["Photo wall","Share your snaps"]};
+var CHEV='<svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var THUMBS={
+  rsvp:"https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=220&q=70",
+  seat:"https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=220&q=70",
+  menu:"https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=220&q=70",
+  photos:"https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=220&q=70"
+};
 function tl(rows){return '<ul class="tl">'+rows.map(function(r){return '<li><span class="tm">'+esc(r[0])+'</span><span>'+esc(r[1])+'</span></li>';}).join("")+'</ul>';}
 
 /* ---------- boot: slug from path -> fetch event ---------- */
@@ -238,11 +257,11 @@ function render(CFG){
   applyTheme(CFG.theme);
   var has={};CFG.features.forEach(function(f){has[f]=true;});
   var order=["rsvp","seat","menu","photos"];
-  var cards=order.filter(function(f){return has[f];}).map(function(f){
-    return '<div class="act" data-go="'+f+'">'+IC[f]+'<div class="t">'+LABELS[f][0]+'</div><div class="d">'+LABELS[f][1]+'</div></div>';
+  var navItems=order.filter(function(f){return has[f];}).map(function(f){
+    var th=THUMBS[f]||CFG.photo||"";
+    return '<button type="button" class="navrow" data-go="'+f+'"><span class="th"'+(th?' style="background-image:url(\''+th+'\')"':'')+'></span><span class="nl">'+LABELS[f][0]+'</span>'+CHEV+'</button>';
   }).join("");
 
-  var heroStyle=CFG.photo?(' photohero" style="background-image:linear-gradient(rgba(27,26,22,.28),rgba(27,26,22,.62)),url(\''+CFG.photo+'\')"'):'"';
   var sections="";
   if(CFG.story&&CFG.story.length)sections+='<div class="section"><div class="kicker">Our love story</div><h2>How it all began</h2>'+CFG.story.map(function(p){return '<p>'+esc(p)+'</p>';}).join("")+'</div>';
   if(CFG.order&&CFG.order.length)sections+='<div class="section"><div class="kicker">The day</div><h2>Order of the day</h2>'+tl(CFG.order)+'</div>';
@@ -251,11 +270,12 @@ function render(CFG){
   var wd=toDate(CFG.iso);
   var metaText=CFG.dateMeta||(wd?fmtDate(wd):"");
   var home='<div class="view on" data-id="home">'
-  +'<div class="hero'+heroStyle+'><div class="pre">We’re getting married</div>'
+  +'<div class="hero">'
   +'<h1>'+ampName(CFG.couple)+'</h1>'
   +(metaText?'<div class="meta">'+esc(metaText)+'</div>':'')
   +'<div class="cd" id="ybd-cd"></div></div>'
-  +(cards?'<div class="acts">'+cards+'</div>':'')
+  +(CFG.photo?'<div class="herobanner"><div class="img" style="background-image:url(\''+CFG.photo+'\')"></div></div>':'')
+  +(navItems?'<nav class="navlist">'+navItems+'</nav>':'')
   +'<div class="col">'+sections
   +'<div class="foot">Have your wedding coming up? Set up your digital experience with <a href="https://yourbigday.events/contact-us/"><b>Your Big Day</b></a></div>'
   +'</div></div>';
