@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Start your wedding experience — Your Big Day</title>
+<meta name="description" content="Tell us about your day, then complete your booking.">
+<link rel="icon" href="https://i0.wp.com/yourbigday.events/wp-content/uploads/2024/01/image_123650291.jpg">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+:root{--paper:#F5EFE3;--card:#FFFFFF;--ink:#333A27;--sec:#8C8574;--accent:#5E6B45;--rule:#E6DDCB;--gold:#B08C55;--fd:'Cormorant Garamond',serif;--fb:'Inter',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--fb);line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:46rem;margin:0 auto;padding:2.4rem 1.15rem 4rem}
+.head{text-align:center;margin-bottom:2rem}
+.kick{font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:.9rem}
+.head h1{font-family:var(--fd);font-weight:500;font-size:clamp(2.1rem,7vw,3rem);line-height:1.02;letter-spacing:-.01em}
+.head p{color:var(--sec);margin-top:.7rem;max-width:34rem;margin-left:auto;margin-right:auto;font-size:.98rem}
+.sec{background:var(--card);border:1px solid var(--rule);border-radius:.8rem;padding:1.4rem 1.25rem;margin-bottom:1.1rem;box-shadow:0 8px 22px rgba(74,62,34,.045)}
+.sec h2{font-family:var(--fd);font-weight:500;font-size:1.45rem;margin-bottom:.2rem}
+.sec .sub{color:var(--sec);font-size:.86rem;margin-bottom:1rem}
+label{display:block;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sec);font-weight:500;margin:.95rem 0 .3rem}
+label .req{color:var(--accent)}
+input,select,textarea{width:100%;font-family:var(--fb);font-size:1rem;color:var(--ink);background:#fff;border:1px solid var(--rule);border-radius:.4rem;padding:.7rem .75rem;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:#b9b2a2}
+textarea{resize:vertical;min-height:4.6rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+.hint{font-size:.78rem;color:var(--sec);margin-top:.35rem}
+.hint b{color:var(--accent);font-weight:600}
+.tiers{display:grid;gap:.7rem;margin-top:.2rem}
+.tier{position:relative;display:flex;align-items:flex-start;gap:.8rem;border:1.5px solid var(--rule);border-radius:.6rem;padding:.95rem 1rem;cursor:pointer;transition:border-color .15s,background .15s}
+.tier:hover{border-color:var(--accent)}
+.tier.on{border-color:var(--accent);background:#fbf9f4;box-shadow:inset 0 0 0 1px var(--accent)}
+.tier input{position:absolute;opacity:0;pointer-events:none}
+.tier .dot{flex:0 0 auto;width:1.15rem;height:1.15rem;border:1.5px solid var(--sec);border-radius:50%;margin-top:.15rem;position:relative}
+.tier.on .dot{border-color:var(--accent)}
+.tier.on .dot:after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+.tier .body{flex:1 1 auto}
+.tier .tn{font-family:var(--fd);font-size:1.3rem;font-weight:500;display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+.tier .pr{color:var(--accent);font-weight:600;font-family:var(--fb);font-size:.95rem}
+.tier .td{color:var(--sec);font-size:.85rem;margin-top:.15rem}
+.tier .pop{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--accent);border-radius:1rem;padding:.12rem .5rem;margin-left:.1rem}
+.err{display:none;background:#fcefe9;border:1px solid #e7c3b3;color:#9a4b2e;border-radius:.5rem;padding:.75rem .9rem;font-size:.9rem;margin:0 0 1rem}
+.err.on{display:block}
+.submit{display:block;width:100%;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:1rem;font-family:var(--fb);font-size:1.02rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+.submit:hover{opacity:.93}
+.submit:disabled{opacity:.55;cursor:default}
+.fine{text-align:center;color:var(--sec);font-size:.8rem;margin-top:.9rem;line-height:1.5}
+.fine a{color:var(--accent)}
+.brandfoot{text-align:center;margin-top:2rem;font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="kick">Your Big Day</div>
+    <h1>Let’s start your wedding experience</h1>
+    <p>Tell us a little about your day. We’ll set everything up and take you to secure checkout to confirm your booking.</p>
+  </div>
+
+  <div class="err" id="err"></div>
+
+  <form id="orderform" novalidate>
+    <div class="sec">
+      <h2>Choose your package</h2>
+      <div class="sub">You can change this now — prices are one-off, in AUD.</div>
+      <div class="tiers" id="tiers"></div>
+    </div>
+
+    <div class="sec">
+      <h2>Your details</h2>
+      <div class="sub">So we can reach you about your booking.</div>
+      <label for="f-name">Full name <span class="req">*</span></label>
+      <input id="f-name" type="text" autocomplete="name" placeholder="Your name" maxlength="120">
+      <div class="row2">
+        <div><label for="f-email">Email <span class="req">*</span></label>
+        <input id="f-email" type="email" autocomplete="email" placeholder="you@example.com" maxlength="160"></div>
+        <div><label for="f-phone">Phone</label>
+        <input id="f-phone" type="tel" autocomplete="tel" placeholder="04xx xxx xxx" maxlength="40"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>Your wedding</h2>
+      <div class="sub">The essentials to get your page started.</div>
+      <label for="f-couple">Couple’s names, as they’ll appear <span class="req">*</span></label>
+      <input id="f-couple" type="text" placeholder="e.g. Ava &amp; Noah" maxlength="160">
+      <div class="row2">
+        <div><label for="f-date">Wedding date</label>
+        <input id="f-date" type="date"></div>
+        <div><label for="f-guests">Approx. number of guests</label>
+        <input id="f-guests" type="number" min="0" inputmode="numeric" placeholder="e.g. 90"></div>
+      </div>
+      <label for="f-venue">Venue &amp; location</label>
+      <input id="f-venue" type="text" placeholder="Venue name, suburb" maxlength="300">
+      <label for="f-slug">Preferred web link</label>
+      <input id="f-slug" type="text" placeholder="ava-and-noah" maxlength="80" autocapitalize="none" autocomplete="off">
+      <div class="hint">Your page will live at hub.yourbigday.events/<b id="slugprev">your-link</b> — leave blank and we’ll pick one.</div>
+    </div>
+
+    <div class="sec">
+      <h2>Style &amp; setup</h2>
+      <div class="sub">A starting point — we’ll refine it together after you book.</div>
+      <label for="f-theme">Page style</label>
+      <select id="f-theme">
+        <option value="signature">Signature — warm ivory, olive &amp; gold (recommended)</option>
+        <option value="editorial">Editorial — soft, understated</option>
+        <option value="romantic">Romantic — blush &amp; rose</option>
+        <option value="botanical">Botanical — sage &amp; green</option>
+        <option value="classic">Classic — clean black &amp; white</option>
+      </select>
+      <label for="f-hero">Link to a hero photo (optional)</label>
+      <input id="f-hero" type="url" placeholder="https://… (you can send this later instead)" maxlength="500">
+      <label for="f-notes">Tell us about your day</label>
+      <textarea id="f-notes" placeholder="Your vision, theme, colours, anything you’d like us to know…" maxlength="4000"></textarea>
+    </div>
+
+    <button type="submit" class="submit" id="submit">Continue to secure payment →</button>
+    <div class="fine">Payment is processed securely by Stripe. After booking, we’ll email you to start building your page.<br>Questions? <a href="https://yourbigday.events/contact-us/">Get in touch</a>.</div>
+  </form>
+  <div class="brandfoot">✦ Your Big Day ✦</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var API="https://eihdtxpcnnqumrjnnvja.supabase.co/functions/v1/api";
+var TIERS=[
+  {k:"starter",n:"Starter",pr:"A$249",d:"You fill it in — full digital page + a printed QR stand, posted to you."},
+  {k:"signature",n:"Signature",pr:"A$499",pop:true,d:"Done for you — we build and style your whole page to match your day."},
+  {k:"premium",n:"Full Service",pr:"A$999",d:"We run it end to end — RSVPs managed, seating built, live dashboard, reports."}
+];
+function $(s){return document.querySelector(s);}
+function qp(k){try{return new URLSearchParams(location.search).get(k)||"";}catch(e){return "";}}
+function esc(s){return(""+s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function slugify(s){return(""+s).toLowerCase().replace(/&/g," and ").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80);}
+
+var sel=(qp("tier")||"signature").toLowerCase();
+if(!TIERS.some(function(t){return t.k===sel;}))sel="signature";
+
+var tiersEl=$("#tiers");
+tiersEl.innerHTML=TIERS.map(function(t){
+  return '<label class="tier'+(t.k===sel?" on":"")+'" data-k="'+t.k+'">'
+    +'<input type="radio" name="tier" value="'+t.k+'"'+(t.k===sel?" checked":"")+'>'
+    +'<span class="dot"></span><span class="body">'
+    +'<span class="tn">'+t.n+' <span class="pr">'+t.pr+'</span>'+(t.pop?'<span class="pop">Most popular</span>':'')+'</span>'
+    +'<span class="td">'+t.d+'</span></span></label>';
+}).join("");
+tiersEl.addEventListener("click",function(e){
+  var lab=e.target.closest(".tier");if(!lab)return;
+  [].forEach.call(tiersEl.querySelectorAll(".tier"),function(x){x.classList.remove("on");});
+  lab.classList.add("on");
+  var r=lab.querySelector("input");if(r)r.checked=true;
+});
+
+var couple=$("#f-couple"),slug=$("#f-slug"),slugprev=$("#slugprev"),slugTouched=false;
+slug.addEventListener("input",function(){slugTouched=slug.value.trim().length>0;syncSlug();});
+couple.addEventListener("input",function(){if(!slugTouched)slug.value=slugify(couple.value);syncSlug();});
+function syncSlug(){slugprev.textContent=(slug.value.trim()?slugify(slug.value):slugify(couple.value))||"your-link";}
+syncSlug();
+
+function showErr(msg){var e=$("#err");e.textContent=msg;e.classList.add("on");window.scrollTo({top:0,behavior:"smooth"});}
+function clearErr(){$("#err").classList.remove("on");}
+
+$("#orderform").addEventListener("submit",function(ev){
+  ev.preventDefault();clearErr();
+  var tierEl=tiersEl.querySelector("input[name=tier]:checked");
+  var tier=tierEl?tierEl.value:"";
+  var name=$("#f-name").value.trim(),email=$("#f-email").value.trim(),coupleV=couple.value.trim();
+  if(!name){showErr("Please add your name.");$("#f-name").focus();return;}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){showErr("Please enter a valid email address.");$("#f-email").focus();return;}
+  if(!coupleV){showErr("Please add the couple’s names.");couple.focus();return;}
+  if(!tier){showErr("Please choose a package.");return;}
+  var payload={
+    action:"order_intake",tier:tier,
+    contact_name:name,email:email,phone:$("#f-phone").value.trim(),
+    couple_names:coupleV,wedding_date:$("#f-date").value,venue:$("#f-venue").value.trim(),
+    guest_count:$("#f-guests").value,slug_pref:(slug.value.trim()?slugify(slug.value):slugify(coupleV)),
+    theme:$("#f-theme").value,hero_photo:$("#f-hero").value.trim(),notes:$("#f-notes").value.trim()
+  };
+  var btn=$("#submit");btn.disabled=true;btn.textContent="Setting up…";
+  fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(r){
+      if(r&&r.ok&&r.checkout_url){window.location.href=r.checkout_url;}
+      else{btn.disabled=false;btn.textContent="Continue to secure payment →";showErr((r&&r.error)?("Sorry — "+r.error):"Sorry, something went wrong. Please try again.");}
+    })
+    .catch(function(){btn.disabled=false;btn.textContent="Continue to secure payment →";showErr("Sorry, we couldn’t reach the server. Please check your connection and try again.");});
+});
+})();
+</script>
+</body>
+</html>
