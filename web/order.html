@@ -26,6 +26,7 @@ input,select,textarea{width:100%;font-family:var(--fb);font-size:1rem;color:var(
 input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 input::placeholder,textarea::placeholder{color:#b9b2a2}
 textarea{resize:vertical;min-height:4.6rem}
+input[type=file]{padding:.55rem .6rem;font-size:.92rem;cursor:pointer}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
 @media(max-width:520px){.row2{grid-template-columns:1fr}}
 .hint{font-size:.78rem;color:var(--sec);margin-top:.35rem}
@@ -112,8 +113,9 @@ textarea{resize:vertical;min-height:4.6rem}
         <option value="botanical">Botanical — sage &amp; green</option>
         <option value="classic">Classic — clean black &amp; white</option>
       </select>
-      <label for="f-hero">Link to a hero photo (optional)</label>
-      <input id="f-hero" type="url" placeholder="https://… (you can send this later instead)" maxlength="500">
+      <label for="f-hero-file">A favourite photo of you two (optional)</label>
+      <input id="f-hero-file" type="file" accept="image/*">
+      <div class="hint">We’ll use this as your page’s hero image. Skip it and send it later if you prefer. JPG/PNG/HEIC, up to 15MB.</div>
       <label for="f-notes">Tell us about your day</label>
       <textarea id="f-notes" placeholder="Your vision, theme, colours, anything you’d like us to know…" maxlength="4000"></textarea>
     </div>
@@ -174,19 +176,29 @@ $("#orderform").addEventListener("submit",function(ev){
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){showErr("Please enter a valid email address.");$("#f-email").focus();return;}
   if(!coupleV){showErr("Please add the couple’s names.");couple.focus();return;}
   if(!tier){showErr("Please choose a package.");return;}
+  var fileEl=$("#f-hero-file");
+  var file=(fileEl&&fileEl.files&&fileEl.files[0])?fileEl.files[0]:null;
+  if(file&&file.size>15*1024*1024){showErr("That photo is larger than 15MB — please choose a smaller image, or skip it and send it later.");return;}
   var payload={
     action:"order_intake",tier:tier,
     contact_name:name,email:email,phone:$("#f-phone").value.trim(),
     couple_names:coupleV,wedding_date:$("#f-date").value,venue:$("#f-venue").value.trim(),
     guest_count:$("#f-guests").value,slug_pref:(slug.value.trim()?slugify(slug.value):slugify(coupleV)),
-    theme:$("#f-theme").value,hero_photo:$("#f-hero").value.trim(),notes:$("#f-notes").value.trim()
+    theme:$("#f-theme").value,notes:$("#f-notes").value.trim()
   };
   var btn=$("#submit");btn.disabled=true;btn.textContent="Setting up…";
+  function go(url){window.location.href=url;}
   fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
     .then(function(r){
-      if(r&&r.ok&&r.checkout_url){window.location.href=r.checkout_url;}
-      else{btn.disabled=false;btn.textContent="Continue to secure payment →";showErr((r&&r.error)?("Sorry — "+r.error):"Sorry, something went wrong. Please try again.");}
+      if(!(r&&r.ok&&r.checkout_url)){btn.disabled=false;btn.textContent="Continue to secure payment →";showErr((r&&r.error)?("Sorry — "+r.error):"Sorry, something went wrong. Please try again.");return;}
+      if(file){
+        btn.textContent="Uploading photo…";
+        var qs="action=order_photo&order_id="+encodeURIComponent(r.order_id)+"&filename="+encodeURIComponent(file.name);
+        fetch(API+"?"+qs,{method:"POST",headers:{"content-type":file.type||"application/octet-stream"},body:file})
+          .catch(function(){})
+          .then(function(){go(r.checkout_url);});
+      } else { go(r.checkout_url); }
     })
     .catch(function(){btn.disabled=false;btn.textContent="Continue to secure payment →";showErr("Sorry, we couldn’t reach the server. Please check your connection and try again.");});
 });
