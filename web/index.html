@@ -494,6 +494,11 @@ function render(CFG){
   [].forEach.call(app.querySelectorAll("[data-go]"),function(el){el.addEventListener("click",function(){go(el.getAttribute("data-go"));});});
   back.addEventListener("click",function(){go("home");});
 
+  /* deep link: /<slug>/seat (QR on the welcome stand) opens that section directly */
+  var startView=norm(decodeURIComponent((location.pathname||"").replace(/^\/+|\/+$/g,"").split("/")[1]||""));
+  // Deferred so the section state declared further down this function is initialised first.
+  if(has[startView])setTimeout(function(){go(startView);if(startView==="seat"){var sqi=app.querySelector("#ybd-sq");if(sqi)sqi.focus();}},0);
+
   (function(){var el=app.querySelector("#ybd-cd");if(!el||!wd)return;var days=Math.max(0,Math.ceil((wd-new Date())/86400000));el.textContent=days===0?"Today is the day":(days+(days===1?" day to go":" days to go"));})();
 
   /* ===== shared matching ===== */
@@ -514,7 +519,6 @@ function render(CFG){
     var tmr;sq.addEventListener("input",function(e){clearTimeout(tmr);tmr=setTimeout(function(){if(GUESTS.length)searchSeat(e.target.value);},110);});
     outEl.addEventListener("click",function(e){var b=e.target.closest?e.target.closest(".choice"):null;if(!b)return;var g=CHOICES[Number(b.getAttribute("data-i"))];if(g)showGuest(g);});
     var wt=INVITE.filter(function(g){return g.tno;});
-    if(!INVITE.length){seatStatus("Seating chart not found","Please check your link, or ask the couple.");return;}
     if(!wt.length){seatStatus("Seating opens closer to the day","Tables are assigned once RSVPs are in — please check back.");return;}
     GUESTS=wt;BYNO={};wt.forEach(function(r){if(!BYNO[r.tno])BYNO[r.tno]={no:r.tno,name:r.tname,guests:[]};BYNO[r.tno].guests.push(r.name);});seatStatus("","");
   }
